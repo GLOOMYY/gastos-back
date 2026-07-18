@@ -22,6 +22,23 @@ def to_result(transaction: Transaction) -> TransactionResult:
         description=transaction.description,
         note=transaction.note,
         reversal_of_id=transaction.reversal_of_id,
+        transfer_id=transaction.transfer_id,
+        exchange_rate=transaction.exchange_rate,
+        exchange_rate_mode=transaction.exchange_rate_mode,
+        exchange_rate_provider=transaction.exchange_rate_provider,
+        exchange_rate_timestamp=transaction.exchange_rate_timestamp,
+        source_amount=transaction.source_amount,
+        target_amount=transaction.target_amount,
+        source_currency=(
+            transaction.source_currency.code
+            if transaction.source_currency is not None
+            else None
+        ),
+        target_currency=(
+            transaction.target_currency.code
+            if transaction.target_currency is not None
+            else None
+        ),
         status=transaction.status.value,
         created_at=transaction.created_at,
         updated_at=transaction.updated_at,

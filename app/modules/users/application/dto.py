@@ -41,6 +41,8 @@ class UpdateUserCommand:
     user_id: str
     email: str | None = None
     password: str | None = None
+    favorite_currency: str | None = None
+    country_code: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +62,8 @@ class UserResult:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    favorite_currency: str | None = None
+    country_code: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

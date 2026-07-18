@@ -7,7 +7,7 @@ from app.shared.domain.exceptions import InvalidCurrencyError
 
 @dataclass(frozen=True, slots=True)
 class Currency:
-    """Uppercase three-letter currency code."""
+    """Uppercase fiat or cryptocurrency code."""
 
     code: str
 
@@ -22,10 +22,10 @@ class Currency:
             The normalized currency.
 
         Raises:
-            InvalidCurrencyError: If the code is not three letters long.
+            InvalidCurrencyError: If the code is not 3-10 letters long.
         """
         clean_value = value.strip().upper()
-        if len(clean_value) != 3 or not clean_value.isalpha():
+        if not 3 <= len(clean_value) <= 10 or not clean_value.isalpha():
             raise InvalidCurrencyError()
 
         return cls(code=clean_value)

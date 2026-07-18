@@ -12,6 +12,9 @@ from app.core.exceptions import (
     AuthenticationRequiredError,
     ServiceUnavailableError,
 )
+from app.modules.reference_data.infrastructure.repositories import (
+    MongoReferenceDataRepository,
+)
 from app.modules.users.application.dto import UserResult
 from app.modules.users.application.use_cases.authenticate_user import (
     AuthenticateUser,
@@ -140,6 +143,30 @@ ClockDep = Annotated[SystemClock, Depends(get_clock)]
 IdGeneratorDep = Annotated[UuidGenerator, Depends(get_id_generator)]
 
 
+def get_user_reference_data(
+    request: Request,
+) -> MongoReferenceDataRepository | None:
+    """Build profile reference validation when MongoDB is available.
+
+    Returning no adapter keeps fully overridden, in-memory user tests
+    independent from infrastructure. Selecting a country or currency still
+    fails validation unless a catalog adapter is available.
+    """
+    mongo_database = getattr(request.app.state, "mongo_database", None)
+    if not isinstance(mongo_database, MongoDatabase):
+        return None
+    try:
+        return MongoReferenceDataRepository(mongo_database.get_database())
+    except RuntimeError:
+        return None
+
+
+UserReferenceDataDep = Annotated[
+    MongoReferenceDataRepository | None,
+    Depends(get_user_reference_data),
+]
+
+
 def get_create_user_use_case(
     user_repository: UserRepositoryDep,
     password_hasher: PasswordHasherDep,
@@ -205,6 +232,7 @@ def get_update_user_use_case(
     refresh_token_repository: RefreshTokenRepositoryDep,
     password_hasher: PasswordHasherDep,
     clock: ClockDep,
+    reference_data: UserReferenceDataDep,
 ) -> UpdateUser:
     """Compose the authenticated user update use case."""
     return UpdateUser(
@@ -212,6 +240,7 @@ def get_update_user_use_case(
         refresh_token_repository=refresh_token_repository,
         password_hasher=password_hasher,
         clock=clock,
+        reference_data=reference_data,
     )
 
 

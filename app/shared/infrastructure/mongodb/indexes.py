@@ -63,6 +63,15 @@ async def create_indexes(
         ],
         name="ix_accounts_owner_active_created",
     )
+    await database.accounts.create_index(
+        [("user_id", ASCENDING), ("is_favorite", ASCENDING)],
+        unique=True,
+        partialFilterExpression={
+            "is_favorite": True,
+            "is_active": True,
+        },
+        name="uq_accounts_owner_favorite",
+    )
     await database.transactions.create_index(
         [
             ("user_id", ASCENDING),
@@ -96,4 +105,36 @@ async def create_indexes(
         unique=True,
         partialFilterExpression={"reversal_of_id": {"$type": "objectId"}},
         name="uq_transactions_reversal_of",
+    )
+    await database.transactions.create_index(
+        [("transfer_id", ASCENDING)],
+        partialFilterExpression={"transfer_id": {"$type": "string"}},
+        name="ix_transactions_transfer_id",
+    )
+    await database.countries.create_index(
+        [("code", ASCENDING)],
+        unique=True,
+        name="uq_countries_code",
+    )
+    await database.countries.create_index(
+        [("alpha3_code", ASCENDING)],
+        unique=True,
+        name="uq_countries_alpha3_code",
+    )
+    await database.countries.create_index(
+        [("is_active", DESCENDING), ("name", ASCENDING)],
+        name="ix_countries_active_name",
+    )
+    await database.currencies.create_index(
+        [("code", ASCENDING)],
+        unique=True,
+        name="uq_currencies_code",
+    )
+    await database.currencies.create_index(
+        [("is_active", DESCENDING), ("kind", ASCENDING), ("code", ASCENDING)],
+        name="ix_currencies_active_kind_code",
+    )
+    await database.currencies.create_index(
+        [("country_codes", ASCENDING), ("kind", ASCENDING), ("code", ASCENDING)],
+        name="ix_currencies_country_kind_code",
     )

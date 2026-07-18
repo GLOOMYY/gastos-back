@@ -14,6 +14,8 @@ class UserDocument(TypedDict):
     normalized_email: str
     password_hash: str
     role: str
+    favorite_currency: NotRequired[str | None]
+    country_code: NotRequired[str | None]
     is_active: bool
     created_at: datetime
     updated_at: datetime

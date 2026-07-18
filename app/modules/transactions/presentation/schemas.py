@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.modules.transactions.domain.enums import TransactionType
+from app.modules.transactions.domain.enums import ExchangeRateMode, TransactionType
 from app.modules.transactions.application.dto import CashFlowInterval
 
 
@@ -27,6 +27,19 @@ class ReverseTransactionRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=300)
 
 
+class TransferMoneyRequest(BaseModel):
+    """Request to transfer funds between two owned accounts."""
+
+    source_account_id: str = Field(min_length=24, max_length=24)
+    target_account_id: str = Field(min_length=24, max_length=24)
+    amount: Decimal = Field(gt=0)
+    occurred_at: datetime
+    exchange_rate_mode: ExchangeRateMode = ExchangeRateMode.MARKET
+    custom_exchange_rate: Decimal | None = Field(default=None, gt=0)
+    description: str | None = Field(default=None, max_length=300)
+    note: str | None = Field(default=None, max_length=500)
+
+
 class TransactionResponse(BaseModel):
     """Public immutable ledger representation."""
 
@@ -41,9 +54,36 @@ class TransactionResponse(BaseModel):
     description: str | None
     note: str | None
     reversal_of_id: str | None
+    transfer_id: str | None
+    exchange_rate: Decimal | None
+    exchange_rate_mode: ExchangeRateMode | None
+    exchange_rate_provider: str | None
+    exchange_rate_timestamp: datetime | None
+    source_amount: Decimal | None
+    target_amount: Decimal | None
+    source_currency: str | None
+    target_currency: str | None
     status: str
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransferMoneyResponse(BaseModel):
+    """Both ledger entries and pricing metadata for a transfer."""
+
+    transfer_id: str
+    source_amount: Decimal
+    target_amount: Decimal
+    source_currency: str
+    target_currency: str
+    exchange_rate: Decimal
+    exchange_rate_mode: ExchangeRateMode | None
+    exchange_rate_provider: str | None
+    exchange_rate_timestamp: datetime | None
+    outgoing_transaction: TransactionResponse
+    incoming_transaction: TransactionResponse
 
     model_config = ConfigDict(from_attributes=True)
 

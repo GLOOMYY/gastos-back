@@ -17,6 +17,8 @@ from app.modules.users.application.use_cases.deactivate_user import (
 )
 from app.modules.users.application.use_cases.update_user import UpdateUser
 from app.modules.users.domain.exceptions import (
+    InvalidFavoriteCurrencyError,
+    InvalidUserCountryError,
     NoUserChangesError,
     UserAlreadyExistsError,
 )
@@ -28,6 +30,18 @@ from tests.unit.application.fakes import (
     FakeTokenService,
     FakeUserRepository,
 )
+
+
+class FakeReferenceData:
+    """Validate a small deterministic profile catalog."""
+
+    async def country_exists(self, code: str) -> bool:
+        """Accept Colombia only."""
+        return code == "CO"
+
+    async def currency_exists(self, code: str) -> bool:
+        """Accept COP and one principal cryptocurrency."""
+        return code in {"COP", "BTC"}
 
 
 async def _build_user_crud() -> tuple[
@@ -122,6 +136,49 @@ async def test_update_user_rejects_empty_changes() -> None:
         await UpdateUser(users, refresh_tokens, hasher, clock).execute(
             UpdateUserCommand(user_id=user_id)
         )
+
+
+@pytest.mark.asyncio
+async def test_update_user_sets_country_and_favorite_currency() -> None:
+    """Profile preferences are normalized and validated by the catalog."""
+    user_id, users, refresh_tokens, hasher, clock = await _build_user_crud()
+
+    result = await UpdateUser(
+        users,
+        refresh_tokens,
+        hasher,
+        clock,
+        FakeReferenceData(),
+    ).execute(
+        UpdateUserCommand(
+            user_id=user_id,
+            favorite_currency="btc",
+            country_code="co",
+        )
+    )
+
+    assert result.favorite_currency == "BTC"
+    assert result.country_code == "CO"
+
+
+@pytest.mark.asyncio
+async def test_update_user_rejects_unknown_profile_references() -> None:
+    """Unknown countries and currencies cannot enter the profile."""
+    user_id, users, refresh_tokens, hasher, clock = await _build_user_crud()
+    use_case = UpdateUser(
+        users,
+        refresh_tokens,
+        hasher,
+        clock,
+        FakeReferenceData(),
+    )
+
+    with pytest.raises(InvalidFavoriteCurrencyError):
+        await use_case.execute(
+            UpdateUserCommand(user_id=user_id, favorite_currency="ETH")
+        )
+    with pytest.raises(InvalidUserCountryError):
+        await use_case.execute(UpdateUserCommand(user_id=user_id, country_code="US"))
 
 
 @pytest.mark.asyncio

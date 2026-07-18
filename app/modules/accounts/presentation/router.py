@@ -6,17 +6,20 @@ from app.api.v1.dependencies import CreateAccountDep
 from app.modules.accounts.application.dto import (
     CreateAccountCommand,
     UpdateAccountCommand,
+    SetFavoriteAccountCommand,
 )
 from app.modules.accounts.presentation.dependencies import (
     CloseDep,
     GetDep,
     ListDep,
     UpdateDep,
+    SetFavoriteDep,
 )
 from app.modules.accounts.presentation.schemas import (
     AccountResponse,
     CreateAccountRequest,
     UpdateAccountRequest,
+    SetFavoriteAccountRequest,
 )
 from app.modules.users.presentation.dependencies import CurrentUserDep
 
@@ -81,6 +84,24 @@ async def update_account(
             account_id=account_id,
             name=request.name,
             description=request.description,
+        )
+    )
+    return AccountResponse.model_validate(result)
+
+
+@router.patch("/{account_id}/favorite", response_model=AccountResponse)
+async def set_favorite_account(
+    account_id: str,
+    request: SetFavoriteAccountRequest,
+    current_user: CurrentUserDep,
+    use_case: SetFavoriteDep,
+) -> AccountResponse:
+    """Select or clear the user's favorite account."""
+    result = await use_case.execute(
+        SetFavoriteAccountCommand(
+            user_id=current_user.id,
+            account_id=account_id,
+            is_favorite=request.is_favorite,
         )
     )
     return AccountResponse.model_validate(result)

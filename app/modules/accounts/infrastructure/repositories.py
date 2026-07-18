@@ -117,9 +117,10 @@ class MongoAccountRepository:
                         "normalized_name": account.normalized_name,
                         "description": account.description,
                         "balance": Decimal128(account.balance),
+                        "is_favorite": account.is_favorite,
                         "is_active": account.is_active,
                         "updated_at": account.updated_at,
-                        "schema_version": 1,
+                        "schema_version": 2,
                     }
                 },
                 session=self._session,

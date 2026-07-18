@@ -5,14 +5,15 @@ from bson import ObjectId
 from app.modules.users.application.dto import RefreshTokenRecord
 from app.modules.users.domain.entities import User
 from app.modules.users.domain.enums import UserRole
-from app.modules.users.domain.value_objects import Email
+from app.modules.users.domain.value_objects import CountryCode, Email
 from app.modules.users.infrastructure.documents import (
     RefreshTokenDocument,
     UserDocument,
 )
+from app.shared.domain.value_objects import Currency
 from app.shared.infrastructure.mongodb.object_id import to_object_id
 
-_USER_SCHEMA_VERSION = 1
+_USER_SCHEMA_VERSION = 2
 _REFRESH_TOKEN_SCHEMA_VERSION = 1
 
 
@@ -23,6 +24,12 @@ def user_to_document(user: User) -> UserDocument:
         normalized_email=user.email.normalized,
         password_hash=user.password_hash,
         role=user.role.value,
+        favorite_currency=(
+            user.favorite_currency.code if user.favorite_currency is not None else None
+        ),
+        country_code=(
+            user.country_code.value if user.country_code is not None else None
+        ),
         is_active=user.is_active,
         created_at=user.created_at,
         updated_at=user.updated_at,
@@ -38,12 +45,22 @@ def document_to_user(document: UserDocument) -> User:
     object_id = document.get("_id")
     if not isinstance(object_id, ObjectId):
         raise ValueError("A persisted user document requires an ObjectId.")
+    favorite_currency = document.get("favorite_currency")
+    country_code = document.get("country_code")
 
     return User(
         id=str(object_id),
         email=Email.create(document["email"]),
         password_hash=document["password_hash"],
         role=UserRole(document["role"]),
+        favorite_currency=(
+            Currency.create(favorite_currency)
+            if favorite_currency is not None
+            else None
+        ),
+        country_code=(
+            CountryCode.create(country_code) if country_code is not None else None
+        ),
         is_active=document["is_active"],
         created_at=document["created_at"],
         updated_at=document["updated_at"],

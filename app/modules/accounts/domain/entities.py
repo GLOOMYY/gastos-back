@@ -28,6 +28,7 @@ class Account:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    is_favorite: bool = False
 
     @classmethod
     def create(
@@ -91,6 +92,7 @@ class Account:
             initial_balance=initial_balance,
             balance=initial_balance,
             currency=Currency.create(currency),
+            is_favorite=False,
             is_active=True,
             created_at=now,
             updated_at=now,
@@ -115,6 +117,7 @@ class Account:
 
     def deactivate(self) -> None:
         """Prevent new operations on the account."""
+        self.is_favorite = False
         self.is_active = False
         self.updated_at = datetime.now(UTC)
 

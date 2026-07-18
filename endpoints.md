@@ -63,8 +63,10 @@ El cliente debe tomar decisiones usando `code`, no comparando `message`.
 | `POST` | `/api/v1/auth/logout` | Refresh token en body | Revoca una sesión |
 | `GET` | `/api/v1/auth/me` | Bearer | Consulta el usuario actual |
 | `GET` | `/api/v1/users/me` | Bearer | Consulta el usuario actual |
-| `PATCH` | `/api/v1/users/me` | Bearer | Actualiza email o contraseña |
+| `PATCH` | `/api/v1/users/me` | Bearer | Actualiza perfil o credenciales |
 | `DELETE` | `/api/v1/users/me` | Bearer | Desactiva el usuario actual |
+| `GET` | `/api/v1/countries` | Bearer | Lista países y territorios globales |
+| `GET` | `/api/v1/currencies` | Bearer | Lista divisas fiat y criptomonedas |
 | `GET` | `/api/v1/exchange-rates/{source}/{target}` | Bearer | Consulta la tasa más reciente |
 | `POST` | `/api/v1/exchange-rates/convert` | Bearer | Convierte un monto con la tasa más reciente |
 | `POST` | `/api/v1/account-types` | Bearer | Crea un tipo de cuenta privado |
@@ -81,9 +83,11 @@ El cliente debe tomar decisiones usando `code`, no comparando `message`.
 | `GET` | `/api/v1/accounts` | Bearer | Lista las cuentas propias |
 | `GET` | `/api/v1/accounts/{id}` | Bearer | Consulta una cuenta propia |
 | `PUT` | `/api/v1/accounts/{id}` | Bearer | Actualiza nombre y descripción |
+| `PATCH` | `/api/v1/accounts/{id}/favorite` | Bearer | Marca o desmarca la cuenta favorita |
 | `DELETE` | `/api/v1/accounts/{id}` | Bearer | Desactiva una cuenta |
 | `POST` | `/api/v1/transactions/income` | Bearer | Registra un ingreso |
 | `POST` | `/api/v1/transactions/expense` | Bearer | Registra un gasto |
+| `POST` | `/api/v1/transactions/transfer` | Bearer | Transfiere entre dos cuentas propias |
 | `GET` | `/api/v1/transactions` | Bearer | Lista el historial paginado |
 | `GET` | `/api/v1/transactions/cash-flow` | Bearer | Entrega datos para gráfica de flujo de caja |
 | `GET` | `/api/v1/transactions/{id}` | Bearer | Consulta un movimiento |
@@ -144,6 +148,8 @@ Respuesta `201 Created`:
   "id": "507f1f77bcf86cd799439011",
   "email": "user@example.com",
   "role": "user",
+  "favorite_currency": null,
+  "country_code": null,
   "is_active": true,
   "created_at": "2026-07-17T12:00:00Z",
   "updated_at": "2026-07-17T12:00:00Z"
@@ -309,6 +315,8 @@ Respuesta `200 OK`:
   "id": "507f1f77bcf86cd799439011",
   "email": "user@example.com",
   "role": "user",
+  "favorite_currency": "COP",
+  "country_code": "CO",
   "is_active": true,
   "created_at": "2026-07-17T12:00:00Z",
   "updated_at": "2026-07-17T12:00:00Z"
@@ -342,8 +350,9 @@ devuelve el mismo schema. Se conserva para no romper clientes existentes.
 
 ### `PATCH /api/v1/users/me`
 
-Actualiza el email, la contraseña o ambos. No acepta un `user_id`; el recurso
-se obtiene siempre del access token.
+Actualiza email, contraseña, divisa favorita o país. No acepta un `user_id`;
+el recurso se obtiene siempre del access token. `favorite_currency` y
+`country_code` deben existir y estar activos en los catálogos globales.
 
 Autenticación: bearer access token.
 
@@ -355,6 +364,18 @@ Body con ambos campos:
   "password": "new-strong-password"
 }
 ```
+
+Preferencias regionales:
+
+```json
+{
+  "favorite_currency": "COP",
+  "country_code": "CO"
+}
+```
+
+La divisa favorita también puede ser una criptomoneda sembrada, por ejemplo
+`BTC`. Los códigos se normalizan a mayúsculas.
 
 También son válidos:
 
@@ -390,6 +411,8 @@ Errores frecuentes:
 | `409` | `user_already_exists` | El email pertenece a otro usuario |
 | `422` | `invalid_email` | El nuevo email es inválido |
 | `422` | `invalid_password` | La contraseña incumple la política |
+| `422` | `invalid_favorite_currency` | La divisa no existe en el catálogo |
+| `422` | `invalid_user_country` | El país no existe en el catálogo |
 | `422` | `request_validation_error` | Body vacío o formato inválido |
 | `503` | `service_unavailable` | MongoDB o JWT no están configurados |
 
@@ -435,6 +458,49 @@ Ejemplo:
 curl -X DELETE http://127.0.0.1:8000/api/v1/users/me \
   -H 'Authorization: Bearer ACCESS_TOKEN'
 ```
+
+---
+
+## Catálogos de países y divisas
+
+### `GET /api/v1/countries`
+
+Lista los 250 países y territorios activos, ordenados por nombre. Cada entrada
+incluye códigos alpha-2 y alpha-3, nombre oficial y las divisas asociadas.
+
+```json
+[
+  {
+    "id": "507f1f77bcf86cd799439011",
+    "code": "CO",
+    "alpha3_code": "COL",
+    "name": "Colombia",
+    "official_name": "Republic of Colombia",
+    "currency_codes": ["COP"]
+  }
+]
+```
+
+### `GET /api/v1/currencies`
+
+Lista divisas fiat y las criptomonedas principales. Acepta los filtros
+opcionales `kind=fiat|crypto` y `country_code=CO`.
+
+```json
+[
+  {
+    "id": "507f1f77bcf86cd799439012",
+    "code": "COP",
+    "name": "Colombian peso",
+    "symbol": "$",
+    "kind": "fiat",
+    "country_codes": ["CO"]
+  }
+]
+```
+
+Ambos endpoints requieren bearer token. Los catálogos son globales y de sólo
+lectura desde la API; se administran mediante seeds versionados.
 
 ---
 
@@ -487,6 +553,21 @@ inmutable `initial_balance` se persisten dentro de la misma transacción de
 MongoDB. `PUT` sólo cambia `name` y `description`; el saldo nunca se modifica
 mediante el CRUD. `DELETE` desactiva la cuenta y conserva su historial.
 
+### `PATCH /api/v1/accounts/{id}/favorite`
+
+Elige una única cuenta principal o favorita:
+
+```json
+{
+  "is_favorite": true
+}
+```
+
+La operación sólo acepta una cuenta activa del usuario autenticado. Al marcar
+una cuenta, cualquier favorita anterior del mismo usuario se desmarca dentro
+de la misma transacción. Enviar `false` desmarca la cuenta indicada. Las
+respuestas de cuentas incluyen siempre el campo booleano `is_favorite`.
+
 ## Movimientos financieros
 
 Ingresos y gastos comparten este body:
@@ -526,6 +607,90 @@ usa `POST /api/v1/transactions/{id}/reversal`:
 ```
 
 La reversión crea un asiento compensatorio y deja intacto el original.
+
+## Transferencias entre cuentas
+
+### `POST /api/v1/transactions/transfer`
+
+Transfiere un monto positivo entre dos cuentas activas del usuario. Las
+cuentas pueden quedar con saldo negativo.
+
+Transferencia en la misma moneda:
+
+```json
+{
+  "source_account_id": "507f1f77bcf86cd799439011",
+  "target_account_id": "507f1f77bcf86cd799439012",
+  "amount": "250000.00",
+  "occurred_at": "2026-07-18T15:00:00Z",
+  "description": "Move to savings"
+}
+```
+
+Transferencia multimoneda con tasa de mercado:
+
+```json
+{
+  "source_account_id": "507f1f77bcf86cd799439011",
+  "target_account_id": "507f1f77bcf86cd799439012",
+  "amount": "400000.00",
+  "occurred_at": "2026-07-18T15:00:00Z",
+  "exchange_rate_mode": "market"
+}
+```
+
+Transferencia multimoneda con tasa propia:
+
+```json
+{
+  "source_account_id": "507f1f77bcf86cd799439011",
+  "target_account_id": "507f1f77bcf86cd799439012",
+  "amount": "400000.00",
+  "occurred_at": "2026-07-18T15:00:00Z",
+  "exchange_rate_mode": "custom",
+  "custom_exchange_rate": "0.00030"
+}
+```
+
+La tasa expresa cuántas unidades de moneda destino se reciben por una unidad
+de moneda origen: `target_amount = amount * exchange_rate`. En el último
+ejemplo se reciben `120 USD` por `400000 COP`.
+
+Respuesta `201 Created`:
+
+```json
+{
+  "transfer_id": "e51cf43d-a67d-4f30-8e71-6f0f36e8e2ad",
+  "source_amount": "400000.00",
+  "target_amount": "120.0000000",
+  "source_currency": "COP",
+  "target_currency": "USD",
+  "exchange_rate": "0.00030",
+  "exchange_rate_mode": "custom",
+  "exchange_rate_provider": "custom",
+  "exchange_rate_timestamp": "2026-07-18T15:00:00Z",
+  "outgoing_transaction": {
+    "transaction_type": "transfer_out",
+    "amount": "400000.00",
+    "currency": "COP",
+    "transfer_id": "e51cf43d-a67d-4f30-8e71-6f0f36e8e2ad"
+  },
+  "incoming_transaction": {
+    "transaction_type": "transfer_in",
+    "amount": "120.0000000",
+    "currency": "USD",
+    "transfer_id": "e51cf43d-a67d-4f30-8e71-6f0f36e8e2ad"
+  }
+}
+```
+
+Los objetos de transacción incluyen además los identificadores, fechas,
+estado y demás campos definidos en el schema público de movimientos.
+
+Ambos movimientos comparten `transfer_id`. La actualización de los dos saldos
+y la creación de ambos asientos se confirman juntas o se revierten juntas.
+Una cuenta ajena se oculta como `account_not_found`; utilizar la misma cuenta
+en ambos lados o mezclar incorrectamente los modos de tasa devuelve `422`.
 
 ## Gráfica de ingresos y gastos
 

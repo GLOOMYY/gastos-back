@@ -75,3 +75,19 @@ class NoUserChangesError(UserDomainError):
     def __init__(self) -> None:
         """Initialize the empty user update error."""
         super().__init__("At least one user field must be updated.")
+
+
+class InvalidUserCountryError(UserDomainError):
+    """Raised when a selected country is malformed or unavailable."""
+
+    def __init__(self) -> None:
+        """Initialize the invalid profile country error."""
+        super().__init__("The selected country is invalid.")
+
+
+class InvalidFavoriteCurrencyError(UserDomainError):
+    """Raised when a preferred monetary asset is unavailable."""
+
+    def __init__(self) -> None:
+        """Initialize the invalid favorite currency error."""
+        super().__init__("The selected favorite currency is invalid.")

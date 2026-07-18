@@ -5,12 +5,18 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.api.v1.dependencies import ExpenseDep, IncomeDep, ReverseDep
+from app.api.v1.dependencies import (
+    ExpenseDep,
+    IncomeDep,
+    ReverseDep,
+    TransferDep,
+)
 from app.modules.transactions.application.dto import (
     CashFlowInterval,
     GetCashFlowQuery,
     RegisterTransactionCommand,
     ReverseTransactionCommand,
+    TransferMoneyCommand,
 )
 from app.modules.transactions.presentation.dependencies import (
     CashFlowDep,
@@ -23,6 +29,8 @@ from app.modules.transactions.presentation.schemas import (
     ReverseTransactionRequest,
     TransactionPageResponse,
     TransactionResponse,
+    TransferMoneyRequest,
+    TransferMoneyResponse,
 )
 from app.modules.users.presentation.dependencies import CurrentUserDep
 
@@ -69,6 +77,29 @@ async def register_expense(
     )
 
 
+@router.post("/transfer", response_model=TransferMoneyResponse, status_code=201)
+async def transfer_money(
+    request: TransferMoneyRequest,
+    current_user: CurrentUserDep,
+    use_case: TransferDep,
+) -> TransferMoneyResponse:
+    """Atomically transfer funds using a market or custom exchange rate."""
+    result = await use_case.execute(
+        TransferMoneyCommand(
+            user_id=current_user.id,
+            source_account_id=request.source_account_id,
+            target_account_id=request.target_account_id,
+            amount=request.amount,
+            occurred_at=request.occurred_at,
+            exchange_rate_mode=request.exchange_rate_mode,
+            custom_exchange_rate=request.custom_exchange_rate,
+            description=request.description,
+            note=request.note,
+        )
+    )
+    return TransferMoneyResponse.model_validate(result)
+
+
 @router.get("", response_model=TransactionPageResponse)
 async def list_transactions(
     current_user: CurrentUserDep,
@@ -87,7 +118,7 @@ async def get_cash_flow(
     use_case: CashFlowDep,
     date_from: date | None = None,
     date_to: date | None = None,
-    currency: Annotated[str, Query(min_length=3, max_length=3)] = "COP",
+    currency: Annotated[str, Query(min_length=3, max_length=10)] = "COP",
     interval: CashFlowInterval = CashFlowInterval.DAY,
 ) -> CashFlowResponse:
     """Return income, expense, and net series ready for charting."""

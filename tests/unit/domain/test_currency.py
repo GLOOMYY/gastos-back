@@ -14,8 +14,13 @@ def test_currency_is_normalized_to_uppercase() -> None:
     assert str(currency) == "COP"
 
 
+def test_currency_accepts_longer_cryptocurrency_codes() -> None:
+    """Well-known crypto symbols may contain more than three letters."""
+    assert Currency.create("doge").code == "DOGE"
+
+
 @pytest.mark.parametrize("value", ["", "CO", "COP1", "12A"])
 def test_currency_rejects_invalid_codes(value: str) -> None:
-    """A currency must consist of exactly three letters."""
+    """A monetary asset code must contain 3-10 letters."""
     with pytest.raises(InvalidCurrencyError):
         Currency.create(value)

@@ -3,7 +3,10 @@
 import re
 from dataclasses import dataclass
 
-from app.modules.users.domain.exceptions import InvalidEmailError
+from app.modules.users.domain.exceptions import (
+    InvalidEmailError,
+    InvalidUserCountryError,
+)
 
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _MAX_EMAIL_LENGTH = 254
@@ -46,4 +49,23 @@ class Email:
 
     def __str__(self) -> str:
         """Return the display representation of the email address."""
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
+class CountryCode:
+    """Uppercase ISO-style two-letter country code."""
+
+    value: str
+
+    @classmethod
+    def create(cls, value: str) -> "CountryCode":
+        """Normalize and validate a country code."""
+        normalized = value.strip().upper()
+        if len(normalized) != 2 or not normalized.isalpha():
+            raise InvalidUserCountryError()
+        return cls(normalized)
+
+    def __str__(self) -> str:
+        """Return the normalized country code."""
         return self.value

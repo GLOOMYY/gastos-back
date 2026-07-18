@@ -12,7 +12,7 @@ class CreateAccountRequest(BaseModel):
     account_type_id: str = Field(min_length=24, max_length=24)
     name: str = Field(min_length=1, max_length=80)
     initial_balance: Decimal = Decimal("0")
-    currency: str = Field(min_length=3, max_length=3)
+    currency: str = Field(min_length=3, max_length=10)
     description: str | None = Field(default=None, max_length=300)
 
 
@@ -21,6 +21,12 @@ class UpdateAccountRequest(BaseModel):
 
     name: str = Field(min_length=1, max_length=80)
     description: str | None = Field(default=None, max_length=300)
+
+
+class SetFavoriteAccountRequest(BaseModel):
+    """Request to select or clear a favorite account."""
+
+    is_favorite: bool
 
 
 class AccountResponse(BaseModel):
@@ -34,6 +40,7 @@ class AccountResponse(BaseModel):
     initial_balance: Decimal
     balance: Decimal
     currency: str
+    is_favorite: bool
     is_active: bool
     created_at: datetime
     updated_at: datetime

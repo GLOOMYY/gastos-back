@@ -113,3 +113,15 @@ class IdGenerator(Protocol):
     def generate(self) -> str:
         """Return a new identifier."""
         ...
+
+
+class UserReferenceData(Protocol):
+    """Validate profile selections against global reference data."""
+
+    async def country_exists(self, code: str) -> bool:
+        """Return whether an active country code exists."""
+        ...
+
+    async def currency_exists(self, code: str) -> bool:
+        """Return whether an active fiat or crypto code exists."""
+        ...

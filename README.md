@@ -146,6 +146,7 @@ GET /api/v1/transactions
 GET /api/v1/transactions/cash-flow
 POST /api/v1/transactions/income
 POST /api/v1/transactions/expense
+POST /api/v1/transactions/transfer
 GET /api/v1/transactions/{id}
 POST /api/v1/transactions/{id}/reversal
 GET /api/v1/exchange-rates/{source_currency}/{target_currency}
@@ -262,6 +263,19 @@ Este seed también es idempotente. Requiere MongoDB Atlas con soporte para
 transacciones cuando el saldo inicial es distinto de cero. No registra
 contraseñas, tokens ni URI de conexión en los logs.
 
+El seed completo también carga 250 países y territorios, 160 divisas fiat o
+locales asociadas y diez criptomonedas principales. El usuario inicial queda
+con `country_code=CO`, `favorite_currency=COP`, y su cuenta inicial se marca
+como favorita. Los catálogos pueden sembrarse independientemente:
+
+```bash
+python -m scripts.seed_reference_data
+```
+
+También están disponibles `python -m scripts.seed_countries` y
+`python -m scripts.seed_currencies`. Todos usan upsert por código estable y no
+crean duplicados al repetirse.
+
 El historial se identifica mediante notas internas `seed:history:v1:*`, por
 lo que repetir el comando no duplica los movimientos ni vuelve a alterar el
 saldo. La cuenta inicial debe estar configurada en `COP` para este seed.
@@ -291,6 +305,41 @@ curl -X POST http://127.0.0.1:8000/api/v1/exchange-rates/convert \
 La respuesta incluye la tasa, fecha de actualización y proveedor usados. El
 resultado no se redondea automáticamente porque cada moneda tiene reglas
 distintas de unidades menores; el frontend debe aplicar su formato de moneda.
+
+## Transferencias entre cuentas
+
+`POST /api/v1/transactions/transfer` mueve dinero entre dos cuentas activas
+del usuario. En la misma moneda se aplica una tasa identidad de `1`. Cuando
+las monedas son diferentes, `exchange_rate_mode=market` consulta
+ExchangeRate-API y `exchange_rate_mode=custom` exige `custom_exchange_rate`.
+
+La tasa siempre representa unidades de la moneda destino por una unidad de la
+moneda origen:
+
+```text
+target_amount = amount * exchange_rate
+```
+
+La operación actualiza ambos saldos y crea los asientos `transfer_out` y
+`transfer_in` dentro de una única transacción MongoDB. Atlas con soporte para
+transacciones es obligatorio. Antes de desplegar esta evolución sobre una
+colección existente ejecuta:
+
+```bash
+python -m scripts.migrations.v2_add_transfer_metadata
+```
+
+Para incorporar preferencias de país/divisa, cuenta favorita y los nuevos
+catálogos sobre una base existente ejecuta después:
+
+```bash
+python -m scripts.migrations.v3_add_profile_reference_data
+python -m scripts.seed_reference_data
+```
+
+La migración añade `favorite_currency` y `country_code` a usuarios,
+`is_favorite` a cuentas, validadores de MongoDB e índices. El índice parcial
+único garantiza como máximo una cuenta favorita activa por usuario.
 
 ## Datos iniciales
 

@@ -81,3 +81,19 @@ class InvalidCashFlowRangeError(TransactionDomainError):
         super().__init__(
             "The cash-flow date range must contain between 1 and 366 days."
         )
+
+
+class SameAccountTransferError(TransactionDomainError):
+    """Raised when both sides of a transfer reference the same account."""
+
+    def __init__(self) -> None:
+        """Initialize the same-account transfer error."""
+        super().__init__("A transfer requires two different accounts.")
+
+
+class InvalidTransferExchangeRateError(TransactionDomainError):
+    """Raised when transfer exchange-rate information is inconsistent."""
+
+    def __init__(self) -> None:
+        """Initialize the invalid transfer rate error."""
+        super().__init__("The exchange-rate information is invalid for this transfer.")

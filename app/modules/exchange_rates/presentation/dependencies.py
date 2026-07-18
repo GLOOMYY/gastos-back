@@ -42,9 +42,24 @@ def get_exchange_rate_provider(
     return provider
 
 
+def get_optional_exchange_rate_provider(
+    request: Request,
+    settings: SettingsDep,
+) -> ExchangeRateProvider | None:
+    """Return a provider only when market-rate settings are available."""
+    try:
+        return get_exchange_rate_provider(request, settings)
+    except ServiceUnavailableError:
+        return None
+
+
 ProviderDep = Annotated[
     ExchangeRateProvider,
     Depends(get_exchange_rate_provider),
+]
+OptionalProviderDep = Annotated[
+    ExchangeRateProvider | None,
+    Depends(get_optional_exchange_rate_provider),
 ]
 
 

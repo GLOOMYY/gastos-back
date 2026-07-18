@@ -14,6 +14,9 @@ from app.modules.accounts.infrastructure.repositories import (
 from app.modules.categories.infrastructure.repositories import (
     MongoCategoryRepository,
 )
+from app.modules.exchange_rates.presentation.dependencies import (
+    OptionalProviderDep,
+)
 from app.modules.transactions.application.use_cases.register_expense import (
     RegisterExpense,
 )
@@ -23,13 +26,20 @@ from app.modules.transactions.application.use_cases.register_income import (
 from app.modules.transactions.application.use_cases.reverse_transaction import (
     ReverseTransaction,
 )
+from app.modules.transactions.application.use_cases.transfer_money import (
+    TransferMoney,
+)
 from app.modules.transactions.infrastructure.repositories import (
     MongoTransactionRepository,
+)
+from app.modules.transactions.infrastructure.services import (
+    UuidTransferIdGenerator,
 )
 from app.modules.users.presentation.dependencies import DatabaseDep
 from app.shared.infrastructure.mongodb.financial_stores import (
     MongoAccountCreationStore,
     MongoLedgerStore,
+    MongoTransferStore,
 )
 
 
@@ -69,7 +79,21 @@ def get_reverse_transaction(database: DatabaseDep) -> ReverseTransaction:
     )
 
 
+def get_transfer_money(
+    database: DatabaseDep,
+    exchange_rates: OptionalProviderDep,
+) -> TransferMoney:
+    """Compose atomic transfers with optional market-rate infrastructure."""
+    return TransferMoney(
+        MongoAccountRepository(database),
+        MongoTransferStore(database),
+        UuidTransferIdGenerator(),
+        exchange_rates,
+    )
+
+
 CreateAccountDep = Annotated[CreateAccount, Depends(get_create_account)]
 IncomeDep = Annotated[RegisterIncome, Depends(get_register_income)]
 ExpenseDep = Annotated[RegisterExpense, Depends(get_register_expense)]
 ReverseDep = Annotated[ReverseTransaction, Depends(get_reverse_transaction)]
+TransferDep = Annotated[TransferMoney, Depends(get_transfer_money)]

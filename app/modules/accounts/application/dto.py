@@ -28,6 +28,15 @@ class UpdateAccountCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class SetFavoriteAccountCommand:
+    """Select or clear an owned favorite account."""
+
+    user_id: str
+    account_id: str
+    is_favorite: bool
+
+
+@dataclass(frozen=True, slots=True)
 class AccountResult:
     """Account information returned to presentation."""
 
@@ -42,3 +51,4 @@ class AccountResult:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    is_favorite: bool = False

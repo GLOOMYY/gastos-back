@@ -37,11 +37,25 @@ class UpdateUserRequest(BaseModel):
 
     email: str | None = Field(default=None, min_length=3, max_length=254)
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    favorite_currency: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=10,
+    )
+    country_code: str | None = Field(default=None, min_length=2, max_length=2)
 
     @model_validator(mode="after")
     def require_at_least_one_change(self) -> Self:
         """Reject update requests without a supported field."""
-        if self.email is None and self.password is None:
+        if all(
+            value is None
+            for value in (
+                self.email,
+                self.password,
+                self.favorite_currency,
+                self.country_code,
+            )
+        ):
             raise ValueError("At least one user field must be updated.")
         return self
 
@@ -52,6 +66,8 @@ class UserResponse(BaseModel):
     id: str
     email: str
     role: str
+    favorite_currency: str | None
+    country_code: str | None
     is_active: bool
     created_at: datetime
     updated_at: datetime

@@ -11,8 +11,17 @@ from app.modules.account_types.domain.entities import AccountType
 from app.modules.account_types.infrastructure.repositories import (
     MongoAccountTypeRepository,
 )
-from app.modules.accounts.application.dto import CreateAccountCommand
+from app.modules.accounts.application.dto import (
+    CreateAccountCommand,
+    SetFavoriteAccountCommand,
+)
 from app.modules.accounts.application.use_cases.create_account import CreateAccount
+from app.modules.accounts.application.use_cases.set_favorite_account import (
+    SetFavoriteAccount,
+)
+from app.modules.accounts.infrastructure.favorite_store import (
+    MongoFavoriteAccountStore,
+)
 from app.modules.accounts.infrastructure.repositories import (
     MongoAccountRepository,
 )
@@ -44,6 +53,7 @@ from app.shared.infrastructure.mongodb.financial_stores import (
 )
 from app.shared.infrastructure.mongodb.indexes import create_indexes
 from app.shared.infrastructure.mongodb.schema import ensure_auth_collection_schemas
+from scripts.seed_reference_data import seed_reference_data
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +89,7 @@ async def seed_complete_data(settings: Settings) -> SeedSummary:
         database = mongo.get_database()
         await ensure_auth_collection_schemas(database)
         await create_indexes(database)
+        await seed_reference_data(database)
 
         users = MongoUserRepository(database)
         create_user = CreateUser(users, PasslibPasswordHasher())
@@ -94,6 +105,12 @@ async def seed_complete_data(settings: Settings) -> SeedSummary:
             if user is None or user.id is None:
                 raise RuntimeError("The initial user could not be retrieved.")
             user_id = user.id
+
+        user = await users.get_by_id(user_id)
+        if user is None:
+            raise RuntimeError("The initial user could not be retrieved.")
+        user.update_preferences(favorite_currency="COP", country_code="CO")
+        await users.update(user)
 
         account_types = MongoAccountTypeRepository(database)
         account_type = await _ensure_account_type(account_types, user_id)
@@ -135,6 +152,17 @@ async def seed_complete_data(settings: Settings) -> SeedSummary:
         else:
             account_id = _required_id(existing_account.id)
             account_currency = existing_account.currency.code
+
+        await SetFavoriteAccount(
+            accounts,
+            MongoFavoriteAccountStore(database),
+        ).execute(
+            SetFavoriteAccountCommand(
+                user_id=user_id,
+                account_id=account_id,
+                is_favorite=True,
+            )
+        )
 
         if account_currency != "COP":
             raise RuntimeError(

@@ -91,9 +91,19 @@ class MongoUserRepository:
                         "normalized_email": user.email.normalized,
                         "password_hash": user.password_hash,
                         "role": user.role.value,
+                        "favorite_currency": (
+                            user.favorite_currency.code
+                            if user.favorite_currency is not None
+                            else None
+                        ),
+                        "country_code": (
+                            user.country_code.value
+                            if user.country_code is not None
+                            else None
+                        ),
                         "is_active": user.is_active,
                         "updated_at": user.updated_at,
-                        "schema_version": 1,
+                        "schema_version": 2,
                     }
                 },
             )

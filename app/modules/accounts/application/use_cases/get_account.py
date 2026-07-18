@@ -19,6 +19,7 @@ def to_result(account: Account) -> AccountResult:
         initial_balance=account.initial_balance,
         balance=account.balance,
         currency=account.currency.code,
+        is_favorite=account.is_favorite,
         is_active=account.is_active,
         created_at=account.created_at,
         updated_at=account.updated_at,

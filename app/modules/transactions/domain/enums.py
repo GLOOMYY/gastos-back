@@ -20,3 +20,10 @@ class TransactionStatus(StrEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
     REVERSED = "reversed"
+
+
+class ExchangeRateMode(StrEnum):
+    """Supported exchange-rate sources for cross-currency transfers."""
+
+    MARKET = "market"
+    CUSTOM = "custom"

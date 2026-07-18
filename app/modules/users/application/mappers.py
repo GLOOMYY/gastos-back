@@ -23,6 +23,12 @@ def user_to_result(user: User) -> UserResult:
         id=user.id,
         email=user.email.value,
         role=user.role.value,
+        favorite_currency=(
+            user.favorite_currency.code if user.favorite_currency is not None else None
+        ),
+        country_code=(
+            user.country_code.value if user.country_code is not None else None
+        ),
         is_active=user.is_active,
         created_at=user.created_at,
         updated_at=user.updated_at,

@@ -16,3 +16,16 @@ class AccountCreationStore(Protocol):
     ) -> Account:
         """Persist both records in one supported database transaction."""
         ...
+
+
+class FavoriteAccountStore(Protocol):
+    """Atomically maintain one favorite account per user."""
+
+    async def set_favorite(
+        self,
+        user_id: str,
+        account_id: str,
+        is_favorite: bool,
+    ) -> Account:
+        """Set or clear an owned account's favorite state."""
+        ...

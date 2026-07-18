@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from app.modules.transactions.domain.enums import TransactionType
+from app.modules.transactions.domain.enums import ExchangeRateMode, TransactionType
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +31,21 @@ class ReverseTransactionCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class TransferMoneyCommand:
+    """Input for an atomic transfer between two owned accounts."""
+
+    user_id: str
+    source_account_id: str
+    target_account_id: str
+    amount: Decimal
+    occurred_at: datetime
+    exchange_rate_mode: ExchangeRateMode = ExchangeRateMode.MARKET
+    custom_exchange_rate: Decimal | None = None
+    description: str | None = None
+    note: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class TransactionResult:
     """Ledger entry returned to presentation."""
 
@@ -45,9 +60,35 @@ class TransactionResult:
     description: str | None
     note: str | None
     reversal_of_id: str | None
+    transfer_id: str | None
+    exchange_rate: Decimal | None
+    exchange_rate_mode: ExchangeRateMode | None
+    exchange_rate_provider: str | None
+    exchange_rate_timestamp: datetime | None
+    source_amount: Decimal | None
+    target_amount: Decimal | None
+    source_currency: str | None
+    target_currency: str | None
     status: str
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class TransferResult:
+    """Both immutable entries and metadata produced by a transfer."""
+
+    transfer_id: str
+    source_amount: Decimal
+    target_amount: Decimal
+    source_currency: str
+    target_currency: str
+    exchange_rate: Decimal
+    exchange_rate_mode: ExchangeRateMode | None
+    exchange_rate_provider: str | None
+    exchange_rate_timestamp: datetime | None
+    outgoing_transaction: TransactionResult
+    incoming_transaction: TransactionResult
 
 
 @dataclass(frozen=True, slots=True)

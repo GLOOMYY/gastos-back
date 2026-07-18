@@ -19,10 +19,11 @@ def account_to_document(value: Account) -> AccountDocument:
         initial_balance=Decimal128(value.initial_balance),
         balance=Decimal128(value.balance),
         currency=value.currency.code,
+        is_favorite=value.is_favorite,
         is_active=value.is_active,
         created_at=value.created_at,
         updated_at=value.updated_at,
-        schema_version=1,
+        schema_version=2,
     )
     if value.id is not None:
         document["_id"] = to_object_id(value.id)
@@ -40,6 +41,7 @@ def document_to_account(document: AccountDocument) -> Account:
         initial_balance=document["initial_balance"].to_decimal(),
         balance=document["balance"].to_decimal(),
         currency=Currency.create(document["currency"]),
+        is_favorite=document.get("is_favorite", False),
         is_active=document["is_active"],
         created_at=document["created_at"],
         updated_at=document["updated_at"],

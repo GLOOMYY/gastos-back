@@ -20,6 +20,15 @@ class TransactionDocument(TypedDict):
     description: str | None
     note: str | None
     reversal_of_id: ObjectId | None
+    transfer_id: NotRequired[str]
+    exchange_rate: NotRequired[Decimal128]
+    exchange_rate_mode: NotRequired[str]
+    exchange_rate_provider: NotRequired[str]
+    exchange_rate_timestamp: NotRequired[datetime]
+    source_amount: NotRequired[Decimal128]
+    target_amount: NotRequired[Decimal128]
+    source_currency: NotRequired[str]
+    target_currency: NotRequired[str]
     status: str
     created_at: datetime
     updated_at: datetime

@@ -19,7 +19,8 @@ gastos-back/
 │       ├── accounts/
 │       ├── categories/
 │       ├── transactions/
-│       └── exchange_rates/
+│       ├── exchange_rates/
+│       └── reference_data/
 ├── scripts/
 │   └── migrations/
 ├── tests/
@@ -186,8 +187,16 @@ ingresos y gastos. Un `user_id` nulo identifica una categoría global.
 
 Administra ingresos, gastos, transferencias y reversiones.
 
-- Casos de uso iniciales: registrar ingreso, registrar gasto, listar movimientos, transferir dinero y revertir un movimiento.
-- Las operaciones que modifican saldos y crean movimientos deberán usar una transacción MongoDB.
+- Casos de uso implementados: registrar ingreso, registrar gasto, listar y
+  consultar movimientos, transferir dinero, generar flujo de caja y revertir
+  un movimiento.
+- Las transferencias crean asientos `transfer_out` y `transfer_in` con un
+  `transfer_id` compartido y actualizan ambos saldos atómicamente.
+- Las transferencias multimoneda aceptan tasa `market` mediante el puerto de
+  `exchange_rates` o una tasa `custom` proporcionada por el usuario.
+- Los metadatos financieros se persisten como `Decimal128`; la migración
+  `v2_add_transfer_metadata.py` actualiza el validador y crea el índice por
+  `transfer_id`.
 
 ### `exchange_rates/`
 
@@ -208,6 +217,21 @@ Integra proveedores externos de tasas sin acoplar los casos de uso a HTTP.
 Este módulo no persiste documentos ni requiere índices o migraciones. Las
 tasas son informativas y se consultan al proveedor configurado.
 
+### `reference_data/`
+
+Gestiona catálogos globales de países, territorios, divisas fiat y
+criptomonedas principales.
+
+- `domain/entities.py`: entidades `Country` y `CurrencyCatalogEntry` sin
+  dependencias de MongoDB o FastAPI.
+- `domain/enums.py`: distingue activos monetarios `fiat` y `crypto`.
+- `application/use_cases/list_reference_data.py`: consultas mediante un
+  puerto de repositorio.
+- `infrastructure/`: documentos, mapeos BSON y repositorio PyMongo para las
+  colecciones `countries` y `currencies`.
+- `presentation/`: endpoints autenticados de sólo lectura
+  `/api/v1/countries` y `/api/v1/currencies`.
+
 ## `scripts/`
 
 Contiene procesos administrativos ejecutados fuera del servidor web.
@@ -216,13 +240,23 @@ Contiene procesos administrativos ejecutados fuera del servidor web.
 - `seed_user.py`: crea idempotentemente el usuario inicial definido mediante
   variables de entorno, usando el flujo real de registro y Argon2.
 - `seed_data.py`: crea idempotentemente un conjunto completo de prueba con
-  usuario, catálogos globales y privados, cuenta, saldo inicial y un historial
-  de ingresos y gastos en COP.
+  usuario configurado en CO/COP, catálogos globales y privados, cuenta
+  favorita, saldo inicial y un historial de ingresos y gastos en COP.
+- `data/reference_catalog.py`: dataset estático versionado con 250 países y
+  territorios, sus divisas y diez criptomonedas principales.
+- `seed_countries.py`: carga países, territorios y sus asociaciones
+  monetarias.
+- `seed_currencies.py`: carga divisas fiat y criptomonedas.
+- `seed_reference_data.py`: ejecuta ambos seeds de referencia.
 - `seed_account_types.py`: carga idempotente del catálogo inicial de tipos de cuenta.
 - `seed_categories.py`: carga idempotente de categorías globales y, cuando se
   indique un usuario inicial explícito, de categorías privadas para ese
   usuario.
 - `migrations/`: migraciones versionadas para evolucionar documentos MongoDB. El archivo `.gitkeep` conserva la carpeta mientras aún no hay migraciones.
+- `migrations/v2_add_transfer_metadata.py`: aplica idempotentemente el
+  validador de metadatos de transferencias y asegura sus índices.
+- `migrations/v3_add_profile_reference_data.py`: incorpora preferencias de
+  perfil, cuenta favorita, esquemas de catálogos e índices relacionados.
 
 Los scripts deben reutilizar configuración e infraestructura de la aplicación, y ser idempotentes cuando corresponda.
 

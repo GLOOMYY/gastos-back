@@ -5,7 +5,8 @@ from datetime import UTC, datetime
 
 from app.modules.users.domain.enums import UserRole
 from app.modules.users.domain.exceptions import EmptyPasswordHashError
-from app.modules.users.domain.value_objects import Email
+from app.modules.users.domain.value_objects import CountryCode, Email
+from app.shared.domain.value_objects import Currency
 
 
 @dataclass(slots=True)
@@ -19,6 +20,8 @@ class User:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    favorite_currency: Currency | None = None
+    country_code: CountryCode | None = None
 
     @classmethod
     def create(cls, email: str, password_hash: str) -> "User":
@@ -45,6 +48,8 @@ class User:
             email=Email.create(email),
             password_hash=password_hash,
             role=UserRole.USER,
+            favorite_currency=None,
+            country_code=None,
             is_active=True,
             created_at=now,
             updated_at=now,
@@ -70,4 +75,16 @@ class User:
         if not password_hash.strip():
             raise EmptyPasswordHashError()
         self.password_hash = password_hash
+        self.updated_at = datetime.now(UTC)
+
+    def update_preferences(
+        self,
+        favorite_currency: str | None,
+        country_code: str | None,
+    ) -> None:
+        """Update optional country and favorite monetary asset selections."""
+        if favorite_currency is not None:
+            self.favorite_currency = Currency.create(favorite_currency)
+        if country_code is not None:
+            self.country_code = CountryCode.create(country_code)
         self.updated_at = datetime.now(UTC)

@@ -18,6 +18,7 @@ class AccountDocument(TypedDict):
     initial_balance: Decimal128
     balance: Decimal128
     currency: str
+    is_favorite: bool
     is_active: bool
     created_at: datetime
     updated_at: datetime

@@ -9,3 +9,12 @@ class HealthResponse(BaseModel):
     """Response returned when the HTTP application is available."""
 
     status: Literal["ok"]
+
+
+class ErrorResponse(BaseModel):
+    """Standard machine-readable API error response."""
+
+    code: str
+    message: str
+    details: object | None
+    request_id: str

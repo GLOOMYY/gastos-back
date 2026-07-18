@@ -150,9 +150,14 @@ Expone los casos de uso mediante FastAPI:
 
 Responsable del ciclo de vida de usuarios y autenticación.
 
-- Casos de uso iniciales: `create_user.py`, `authenticate_user.py` y `get_user.py`.
-- `password_hasher.py`: adaptación técnica para generar y verificar hashes.
-- `token_service.py`: adaptación técnica para crear y validar tokens.
+- Casos de uso implementados: registro, login, consulta del usuario actual,
+  rotación de refresh token y logout.
+- `password_hasher.py`: adaptación Passlib con Argon2 para generar y verificar
+  hashes de contraseña.
+- `token_service.py`: emisión y validación de JWT, además del hash SHA-256 de
+  refresh tokens.
+- `repositories.py`: persistencia PyMongo de usuarios y sesiones de refresh.
+- Los refresh tokens usan rotación, revocación por familia e índice TTL.
 
 ### `account_types/`
 
@@ -246,4 +251,6 @@ infrastructure -------------> domain/application
 
 ## Estado del scaffolding
 
-Los archivos creados son marcadores de posición intencionales. La implementación debe incorporarse por fases, comenzando por configuración, conexión MongoDB, ciclo de vida, health check e índices. Crear el esqueleto completo desde el inicio no implica que todos los módulos deban implementarse simultáneamente.
+El módulo de usuarios, la configuración, la conexión MongoDB y el health check
+ya tienen implementación. Los archivos aún vacíos de los demás módulos siguen
+siendo marcadores de posición intencionales y deben incorporarse por fases.

@@ -1,8 +1,9 @@
 """Environment-based application configuration."""
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,9 +19,9 @@ class Settings(BaseSettings):
     mongodb_database: str | None = None
 
     jwt_secret_key: SecretStr | None = None
-    jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
-    refresh_token_expire_days: int = 30
+    jwt_algorithm: Literal["HS256"] = "HS256"
+    access_token_expire_minutes: int = Field(default=30, gt=0)
+    refresh_token_expire_days: int = Field(default=30, gt=0)
 
     exchange_rate_provider: str | None = None
     exchange_rate_api_key: SecretStr | None = None

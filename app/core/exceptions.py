@@ -59,6 +59,7 @@ from app.modules.users.domain.exceptions import (
     InvalidFavoriteCurrencyError,
     InvalidPasswordError,
     InvalidUserCountryError,
+    InvalidUserNameError,
     NoUserChangesError,
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -232,6 +233,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         InvalidCurrencyError,
         InvalidFavoriteCurrencyError,
         InvalidUserCountryError,
+        InvalidUserNameError,
         UnsupportedExchangeRateCurrencyError,
         InvalidConversionAmountError,
     ):

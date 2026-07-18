@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from app.modules.users.domain.enums import UserRole
-from app.modules.users.domain.exceptions import EmptyPasswordHashError
+from app.modules.users.domain.exceptions import (
+    EmptyPasswordHashError,
+    InvalidUserNameError,
+)
 from app.modules.users.domain.value_objects import CountryCode, Email
 from app.shared.domain.value_objects import Currency
 
@@ -20,6 +23,7 @@ class User:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    name: str | None = None
     favorite_currency: Currency | None = None
     country_code: CountryCode | None = None
 
@@ -48,6 +52,7 @@ class User:
             email=Email.create(email),
             password_hash=password_hash,
             role=UserRole.USER,
+            name=None,
             favorite_currency=None,
             country_code=None,
             is_active=True,
@@ -75,6 +80,14 @@ class User:
         if not password_hash.strip():
             raise EmptyPasswordHashError()
         self.password_hash = password_hash
+        self.updated_at = datetime.now(UTC)
+
+    def change_name(self, name: str) -> None:
+        """Replace the optional profile display name with validated text."""
+        clean_name = " ".join(name.split())
+        if not clean_name or len(clean_name) > 120:
+            raise InvalidUserNameError()
+        self.name = clean_name
         self.updated_at = datetime.now(UTC)
 
     def update_preferences(

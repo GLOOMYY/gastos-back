@@ -91,3 +91,11 @@ class InvalidFavoriteCurrencyError(UserDomainError):
     def __init__(self) -> None:
         """Initialize the invalid favorite currency error."""
         super().__init__("The selected favorite currency is invalid.")
+
+
+class InvalidUserNameError(UserDomainError):
+    """Raised when a profile name is blank or too long."""
+
+    def __init__(self) -> None:
+        """Initialize the invalid profile name error."""
+        super().__init__("The user name must contain between 1 and 120 characters.")

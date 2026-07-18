@@ -341,6 +341,15 @@ La migración añade `favorite_currency` y `country_code` a usuarios,
 `is_favorite` a cuentas, validadores de MongoDB e índices. El índice parcial
 único garantiza como máximo una cuenta favorita activa por usuario.
 
+Para añadir el nombre personalizable a usuarios existentes ejecuta:
+
+```bash
+python -m scripts.migrations.v4_add_user_name
+```
+
+El campo `name` es opcional, aparece en las respuestas de usuario y se
+actualiza mediante `PATCH /api/v1/users/me`.
+
 ## Datos iniciales
 
 `scripts/seed_data.py` crea los recursos globales y privados iniciales. Un

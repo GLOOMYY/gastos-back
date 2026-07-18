@@ -37,6 +37,7 @@ class UpdateUserRequest(BaseModel):
 
     email: str | None = Field(default=None, min_length=3, max_length=254)
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    name: str | None = Field(default=None, min_length=1, max_length=120)
     favorite_currency: str | None = Field(
         default=None,
         min_length=3,
@@ -52,6 +53,7 @@ class UpdateUserRequest(BaseModel):
             for value in (
                 self.email,
                 self.password,
+                self.name,
                 self.favorite_currency,
                 self.country_code,
             )
@@ -66,6 +68,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     role: str
+    name: str | None
     favorite_currency: str | None
     country_code: str | None
     is_active: bool

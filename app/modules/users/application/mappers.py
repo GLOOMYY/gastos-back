@@ -23,6 +23,7 @@ def user_to_result(user: User) -> UserResult:
         id=user.id,
         email=user.email.value,
         role=user.role.value,
+        name=user.name,
         favorite_currency=(
             user.favorite_currency.code if user.favorite_currency is not None else None
         ),

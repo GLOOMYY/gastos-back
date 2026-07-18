@@ -6,7 +6,10 @@ import pytest
 
 from app.modules.users.domain.entities import User
 from app.modules.users.domain.enums import UserRole
-from app.modules.users.domain.exceptions import EmptyPasswordHashError
+from app.modules.users.domain.exceptions import (
+    EmptyPasswordHashError,
+    InvalidUserNameError,
+)
 
 
 def test_create_user_sets_initial_domain_state() -> None:
@@ -21,6 +24,7 @@ def test_create_user_sets_initial_domain_state() -> None:
     assert user.email.normalized == "user@example.com"
     assert user.password_hash == "$argon2id$test-hash"
     assert user.role is UserRole.USER
+    assert user.name is None
     assert user.is_active is True
     assert user.created_at.tzinfo is UTC
     assert user.updated_at == user.created_at
@@ -54,3 +58,16 @@ def test_user_can_be_deactivated_and_reactivated() -> None:
 
     assert user.is_active is True
     assert user.updated_at >= user.created_at
+
+
+def test_user_name_is_normalized_and_validated() -> None:
+    """Profile names collapse whitespace and reject blank values."""
+    user = User.create("user@example.com", "$argon2id$test-hash")
+
+    user.change_name("  Sebastián   Mesa Montoya  ")
+
+    assert user.name == "Sebastián Mesa Montoya"
+    with pytest.raises(InvalidUserNameError):
+        user.change_name("   ")
+    with pytest.raises(InvalidUserNameError):
+        user.change_name("a" * 121)

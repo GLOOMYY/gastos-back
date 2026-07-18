@@ -139,6 +139,18 @@ async def test_update_user_rejects_empty_changes() -> None:
 
 
 @pytest.mark.asyncio
+async def test_update_user_changes_profile_name() -> None:
+    """The authenticated user may set a normalized display name."""
+    user_id, users, refresh_tokens, hasher, clock = await _build_user_crud()
+
+    result = await UpdateUser(users, refresh_tokens, hasher, clock).execute(
+        UpdateUserCommand(user_id=user_id, name="  Ana   Gómez  ")
+    )
+
+    assert result.name == "Ana Gómez"
+
+
+@pytest.mark.asyncio
 async def test_update_user_sets_country_and_favorite_currency() -> None:
     """Profile preferences are normalized and validated by the catalog."""
     user_id, users, refresh_tokens, hasher, clock = await _build_user_crud()

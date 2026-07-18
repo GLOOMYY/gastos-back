@@ -49,6 +49,7 @@ async def update_authenticated_user(
             user_id=current_user.id,
             email=request.email,
             password=request.password,
+            name=request.name,
             favorite_currency=request.favorite_currency,
             country_code=request.country_code,
         )

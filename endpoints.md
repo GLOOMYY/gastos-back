@@ -63,7 +63,7 @@ El cliente debe tomar decisiones usando `code`, no comparando `message`.
 | `POST` | `/api/v1/auth/logout` | Refresh token en body | Revoca una sesión |
 | `GET` | `/api/v1/auth/me` | Bearer | Consulta el usuario actual |
 | `GET` | `/api/v1/users/me` | Bearer | Consulta el usuario actual |
-| `PATCH` | `/api/v1/users/me` | Bearer | Actualiza perfil o credenciales |
+| `PATCH` | `/api/v1/users/me` | Bearer | Actualiza nombre, perfil o credenciales |
 | `DELETE` | `/api/v1/users/me` | Bearer | Desactiva el usuario actual |
 | `GET` | `/api/v1/countries` | Bearer | Lista países y territorios globales |
 | `GET` | `/api/v1/currencies` | Bearer | Lista divisas fiat y criptomonedas |
@@ -148,6 +148,7 @@ Respuesta `201 Created`:
   "id": "507f1f77bcf86cd799439011",
   "email": "user@example.com",
   "role": "user",
+  "name": null,
   "favorite_currency": null,
   "country_code": null,
   "is_active": true,
@@ -315,6 +316,7 @@ Respuesta `200 OK`:
   "id": "507f1f77bcf86cd799439011",
   "email": "user@example.com",
   "role": "user",
+  "name": "Sebastián Mesa",
   "favorite_currency": "COP",
   "country_code": "CO",
   "is_active": true,
@@ -350,9 +352,10 @@ devuelve el mismo schema. Se conserva para no romper clientes existentes.
 
 ### `PATCH /api/v1/users/me`
 
-Actualiza email, contraseña, divisa favorita o país. No acepta un `user_id`;
-el recurso se obtiene siempre del access token. `favorite_currency` y
-`country_code` deben existir y estar activos en los catálogos globales.
+Actualiza nombre, email, contraseña, divisa favorita o país. No acepta un
+`user_id`; el recurso se obtiene siempre del access token.
+`favorite_currency` y `country_code` deben existir y estar activos en los
+catálogos globales.
 
 Autenticación: bearer access token.
 
@@ -376,6 +379,17 @@ Preferencias regionales:
 
 La divisa favorita también puede ser una criptomoneda sembrada, por ejemplo
 `BTC`. Los códigos se normalizan a mayúsculas.
+
+Nombre para personalización y onboarding:
+
+```json
+{
+  "name": "Sebastián Mesa Montoya"
+}
+```
+
+El nombre admite entre 1 y 120 caracteres. Los espacios exteriores se
+eliminan y las secuencias internas se normalizan a un solo espacio.
 
 También son válidos:
 
@@ -411,6 +425,7 @@ Errores frecuentes:
 | `409` | `user_already_exists` | El email pertenece a otro usuario |
 | `422` | `invalid_email` | El nuevo email es inválido |
 | `422` | `invalid_password` | La contraseña incumple la política |
+| `422` | `invalid_user_name` | El nombre está vacío o supera 120 caracteres |
 | `422` | `invalid_favorite_currency` | La divisa no existe en el catálogo |
 | `422` | `invalid_user_country` | El país no existe en el catálogo |
 | `422` | `request_validation_error` | Body vacío o formato inválido |

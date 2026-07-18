@@ -41,6 +41,7 @@ class UpdateUserCommand:
     user_id: str
     email: str | None = None
     password: str | None = None
+    name: str | None = None
     favorite_currency: str | None = None
     country_code: str | None = None
 
@@ -62,6 +63,7 @@ class UserResult:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    name: str | None = None
     favorite_currency: str | None = None
     country_code: str | None = None
 

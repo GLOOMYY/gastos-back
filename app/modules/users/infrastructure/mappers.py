@@ -13,7 +13,7 @@ from app.modules.users.infrastructure.documents import (
 from app.shared.domain.value_objects import Currency
 from app.shared.infrastructure.mongodb.object_id import to_object_id
 
-_USER_SCHEMA_VERSION = 2
+_USER_SCHEMA_VERSION = 3
 _REFRESH_TOKEN_SCHEMA_VERSION = 1
 
 
@@ -24,6 +24,7 @@ def user_to_document(user: User) -> UserDocument:
         normalized_email=user.email.normalized,
         password_hash=user.password_hash,
         role=user.role.value,
+        name=user.name,
         favorite_currency=(
             user.favorite_currency.code if user.favorite_currency is not None else None
         ),
@@ -53,6 +54,7 @@ def document_to_user(document: UserDocument) -> User:
         email=Email.create(document["email"]),
         password_hash=document["password_hash"],
         role=UserRole(document["role"]),
+        name=document.get("name"),
         favorite_currency=(
             Currency.create(favorite_currency)
             if favorite_currency is not None

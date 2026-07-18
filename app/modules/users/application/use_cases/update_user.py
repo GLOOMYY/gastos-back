@@ -50,6 +50,7 @@ class UpdateUser:
             for value in (
                 command.email,
                 command.password,
+                command.name,
                 command.favorite_currency,
                 command.country_code,
             )
@@ -71,6 +72,9 @@ class UpdateUser:
                 if existing_user is not None:
                     raise UserAlreadyExistsError()
             user.change_email(email.value)
+
+        if command.name is not None:
+            user.change_name(command.name)
 
         password_changed = command.password is not None
         if command.password is not None:

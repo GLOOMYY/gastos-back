@@ -154,6 +154,8 @@ Responsable del ciclo de vida de usuarios y autenticación.
 
 - Casos de uso implementados: registro, login, consulta y actualización del
   usuario actual, desactivación lógica, rotación de refresh token y logout.
+- El perfil admite nombre personalizable, país y divisa favorita sin mezclar
+  esos datos con las credenciales de autenticación.
 - `password_hasher.py`: adaptación Passlib con Argon2 para generar y verificar
   hashes de contraseña.
 - `token_service.py`: emisión y validación de JWT, además del hash SHA-256 de
@@ -257,6 +259,8 @@ Contiene procesos administrativos ejecutados fuera del servidor web.
   validador de metadatos de transferencias y asegura sus índices.
 - `migrations/v3_add_profile_reference_data.py`: incorpora preferencias de
   perfil, cuenta favorita, esquemas de catálogos e índices relacionados.
+- `migrations/v4_add_user_name.py`: añade el nombre opcional a usuarios
+  existentes y actualiza el validador MongoDB.
 
 Los scripts deben reutilizar configuración e infraestructura de la aplicación, y ser idempotentes cuando corresponda.
 

@@ -8,6 +8,9 @@ from app.modules.account_types.presentation.router import (
 )
 from app.modules.accounts.presentation.router import router as accounts_router
 from app.modules.categories.presentation.router import router as categories_router
+from app.modules.exchange_rates.presentation.router import (
+    router as exchange_rates_router,
+)
 from app.modules.transactions.presentation.router import (
     router as transactions_router,
 )
@@ -21,6 +24,7 @@ api_v1_router.include_router(account_types_router)
 api_v1_router.include_router(categories_router)
 api_v1_router.include_router(accounts_router)
 api_v1_router.include_router(transactions_router)
+api_v1_router.include_router(exchange_rates_router)
 
 
 @api_v1_router.get(

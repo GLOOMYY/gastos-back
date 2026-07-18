@@ -33,6 +33,11 @@ from app.modules.categories.domain.exceptions import (
     InvalidCategoryNameError,
     InvalidCategoryOwnerError,
 )
+from app.modules.exchange_rates.domain.exceptions import (
+    ExchangeRateUnavailableError,
+    InvalidConversionAmountError,
+    UnsupportedExchangeRateCurrencyError,
+)
 from app.modules.transactions.domain.exceptions import (
     InvalidTransactionAmountError,
     InvalidTransactionCategoryError,
@@ -219,6 +224,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         InvalidTransactionDateError,
         InvalidTransactionIdentifierError,
         InvalidCurrencyError,
+        UnsupportedExchangeRateCurrencyError,
+        InvalidConversionAmountError,
     ):
         app.add_exception_handler(
             validation_exception,
@@ -300,6 +307,19 @@ def register_exception_handlers(app: FastAPI) -> None:
             request,
             status.HTTP_503_SERVICE_UNAVAILABLE,
             "service_unavailable",
+            str(exc),
+        )
+
+    @app.exception_handler(ExchangeRateUnavailableError)
+    async def exchange_rate_unavailable_handler(
+        request: Request,
+        exc: ExchangeRateUnavailableError,
+    ) -> JSONResponse:
+        """Translate provider failures to a safe unavailable response."""
+        return _error_response(
+            request,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "exchange_rate_unavailable",
             str(exc),
         )
 

@@ -32,8 +32,11 @@ class Settings(BaseSettings):
     initial_account_currency: str = "COP"
     initial_account_balance: Decimal = Decimal("0")
 
-    exchange_rate_provider: str | None = None
+    exchange_rate_provider: str = "exchangerate_api"
     exchange_rate_api_key: SecretStr | None = None
+    exchange_rate_base_url: str = "https://v6.exchangerate-api.com"
+    exchange_rate_timeout_seconds: float = Field(default=5.0, gt=0)
+    exchange_rate_cache_ttl_seconds: int = Field(default=300, ge=0)
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -68,6 +71,16 @@ class Settings(BaseSettings):
             raise RuntimeError("DEBUG must be false in production.")
         if "*" in self.allowed_cors_origins:
             raise RuntimeError("Wildcard CORS origins are not allowed in production.")
+        if self.exchange_rate_provider.strip().casefold() not in {
+            "exchangerate_api",
+            "exchangerate-api",
+        }:
+            raise RuntimeError("EXCHANGE_RATE_PROVIDER is not supported.")
+        if (
+            self.exchange_rate_api_key is None
+            or not self.exchange_rate_api_key.get_secret_value().strip()
+        ):
+            missing.append("EXCHANGE_RATE_API_KEY")
         if missing:
             raise RuntimeError(
                 f"Missing required production settings: {', '.join(missing)}."

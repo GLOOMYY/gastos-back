@@ -35,3 +35,13 @@ services:
         value: "30"
       - key: CORS_ALLOWED_ORIGINS
         sync: false
+      - key: EXCHANGE_RATE_PROVIDER
+        value: exchangerate_api
+      - key: EXCHANGE_RATE_API_KEY
+        sync: false
+      - key: EXCHANGE_RATE_BASE_URL
+        value: https://v6.exchangerate-api.com
+      - key: EXCHANGE_RATE_TIMEOUT_SECONDS
+        value: "5"
+      - key: EXCHANGE_RATE_CACHE_TTL_SECONDS
+        value: "300"

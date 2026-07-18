@@ -65,6 +65,8 @@ El cliente debe tomar decisiones usando `code`, no comparando `message`.
 | `GET` | `/api/v1/users/me` | Bearer | Consulta el usuario actual |
 | `PATCH` | `/api/v1/users/me` | Bearer | Actualiza email o contraseña |
 | `DELETE` | `/api/v1/users/me` | Bearer | Desactiva el usuario actual |
+| `GET` | `/api/v1/exchange-rates/{source}/{target}` | Bearer | Consulta la tasa más reciente |
+| `POST` | `/api/v1/exchange-rates/convert` | Bearer | Convierte un monto con la tasa más reciente |
 | `POST` | `/api/v1/account-types` | Bearer | Crea un tipo de cuenta privado |
 | `GET` | `/api/v1/account-types` | Bearer | Lista tipos globales y propios |
 | `GET` | `/api/v1/account-types/{id}` | Bearer | Consulta un tipo disponible |
@@ -574,6 +576,64 @@ Respuesta `200 OK`:
 Los períodos sin movimientos también aparecen con valores en cero. Las
 reversiones compensan el ingreso o gasto original sin alterar el asiento
 confirmado.
+
+## Divisas
+
+Las consultas se realizan mediante ExchangeRate-API desde el backend. La
+clave del proveedor nunca se entrega al cliente ni aparece en las URLs
+salientes. Las tasas se almacenan temporalmente en memoria para reducir el
+consumo de cuota.
+
+### `GET /api/v1/exchange-rates/{source_currency}/{target_currency}`
+
+Devuelve la tasa más reciente entre dos códigos de moneda de tres letras.
+
+```http
+GET /api/v1/exchange-rates/USD/COP
+Authorization: Bearer ACCESS_TOKEN
+```
+
+Respuesta `200 OK`:
+
+```json
+{
+  "source_currency": "USD",
+  "target_currency": "COP",
+  "rate": "4000.25",
+  "provider": "exchangerate-api",
+  "updated_at": "2026-07-18T00:00:00Z"
+}
+```
+
+### `POST /api/v1/exchange-rates/convert`
+
+Petición:
+
+```json
+{
+  "source_currency": "USD",
+  "target_currency": "COP",
+  "amount": "25.50"
+}
+```
+
+Respuesta `200 OK`:
+
+```json
+{
+  "source_currency": "USD",
+  "target_currency": "COP",
+  "source_amount": "25.50",
+  "converted_amount": "102006.3750",
+  "rate": "4000.25",
+  "provider": "exchangerate-api",
+  "updated_at": "2026-07-18T00:00:00Z"
+}
+```
+
+No se aplica redondeo automático. Los errores del proveedor se traducen a
+`exchange_rate_unavailable` con estado `503`, sin revelar la clave ni el
+detalle interno. Una moneda no soportada devuelve estado `422`.
 
 ## Documentación automática
 

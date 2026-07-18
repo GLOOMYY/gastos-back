@@ -18,7 +18,8 @@ gastos-back/
 │       ├── account_types/
 │       ├── accounts/
 │       ├── categories/
-│       └── transactions/
+│       ├── transactions/
+│       └── exchange_rates/
 ├── scripts/
 │   └── migrations/
 ├── tests/
@@ -187,6 +188,25 @@ Administra ingresos, gastos, transferencias y reversiones.
 
 - Casos de uso iniciales: registrar ingreso, registrar gasto, listar movimientos, transferir dinero y revertir un movimiento.
 - Las operaciones que modifican saldos y crean movimientos deberán usar una transacción MongoDB.
+
+### `exchange_rates/`
+
+Integra proveedores externos de tasas sin acoplar los casos de uso a HTTP.
+
+- `domain/exceptions.py`: fallos estables de moneda no soportada, monto
+  inválido y proveedor no disponible.
+- `application/dto.py`: consultas, comandos, cotizaciones y resultados de
+  conversión con `Decimal`.
+- `application/ports.py`: contrato `ExchangeRateProvider` implementado por
+  infraestructura.
+- `application/use_cases/`: consulta la tasa más reciente y convierte montos.
+- `infrastructure/exchangerate_api.py`: cliente de ExchangeRate-API con token
+  bearer, validación de respuestas, reintentos acotados y caché en memoria.
+- `presentation/`: dependencias, esquemas y endpoints autenticados bajo
+  `/api/v1/exchange-rates`.
+
+Este módulo no persiste documentos ni requiere índices o migraciones. Las
+tasas son informativas y se consultan al proveedor configurado.
 
 ## `scripts/`
 

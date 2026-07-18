@@ -68,8 +68,23 @@ def test_production_configuration_rejects_wildcard_cors() -> None:
         mongodb_uri="mongodb://example.invalid",
         mongodb_database="gastos",
         jwt_secret_key="x" * 32,
+        exchange_rate_api_key="provider-secret",
         cors_allowed_origins="*",
     )
 
     with pytest.raises(RuntimeError, match="Wildcard CORS"):
+        settings.validate_production_configuration()
+
+
+def test_production_configuration_requires_exchange_rate_secret() -> None:
+    """Do not deploy the enabled currency API without its provider secret."""
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        mongodb_uri="mongodb://example.invalid",
+        mongodb_database="gastos",
+        jwt_secret_key="x" * 32,
+    )
+
+    with pytest.raises(RuntimeError, match="EXCHANGE_RATE_API_KEY"):
         settings.validate_production_configuration()

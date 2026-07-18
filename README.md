@@ -85,6 +85,17 @@ INITIAL_USER_EMAIL=user@example.com
 INITIAL_USER_PASSWORD=una-contraseña-segura
 ```
 
+Para consultar tasas y convertir monedas configura ExchangeRate-API:
+
+```dotenv
+EXCHANGE_RATE_PROVIDER=exchangerate_api
+EXCHANGE_RATE_API_KEY=tu-clave-regenerada
+```
+
+La clave se envía al proveedor como token bearer y nunca forma parte de la
+URL. Las respuestas de tasas se conservan temporalmente en memoria para
+reducir el consumo de cuota.
+
 ## Ejecución local
 
 Después de instalar las dependencias y preparar `.env`, inicia el servidor:
@@ -137,6 +148,8 @@ POST /api/v1/transactions/income
 POST /api/v1/transactions/expense
 GET /api/v1/transactions/{id}
 POST /api/v1/transactions/{id}/reversal
+GET /api/v1/exchange-rates/{source_currency}/{target_currency}
+POST /api/v1/exchange-rates/convert
 ```
 
 Registro:
@@ -257,6 +270,28 @@ El frontend puede obtener datos diarios o mensuales para una gráfica mediante
 `GET /api/v1/transactions/cash-flow`. El rango predeterminado cubre 90 días y
 el máximo permitido es de 366 días.
 
+## Conversión de divisas
+
+Los endpoints de divisas requieren access token. Para consultar una tasa:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/exchange-rates/USD/COP \
+  -H 'Authorization: Bearer ACCESS_TOKEN'
+```
+
+Para convertir un monto sin utilizar números de punto flotante:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/exchange-rates/convert \
+  -H 'Authorization: Bearer ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"source_currency":"USD","target_currency":"COP","amount":"25.50"}'
+```
+
+La respuesta incluye la tasa, fecha de actualización y proveedor usados. El
+resultado no se redondea automáticamente porque cada moneda tiene reglas
+distintas de unidades menores; el frontend debe aplicar su formato de moneda.
+
 ## Datos iniciales
 
 `scripts/seed_data.py` crea los recursos globales y privados iniciales. Un
@@ -276,7 +311,8 @@ por Render y comprueba `/api/v1/health` antes de publicar una versión.
 2. En Render selecciona **New > Blueprint** y conecta el repositorio.
 3. Render detectará `render.yaml` en la raíz.
 4. Proporciona los valores solicitados para `MONGODB_URI`,
-   `MONGODB_DATABASE` y `CORS_ALLOWED_ORIGINS`.
+   `MONGODB_DATABASE`, `CORS_ALLOWED_ORIGINS` y
+   `EXCHANGE_RATE_API_KEY`.
 5. Confirma la creación del servicio `gastos-back`.
 
 `JWT_SECRET_KEY` es generado por Render y no debe copiarse al repositorio.
@@ -288,6 +324,7 @@ Las variables obligatorias quedan así:
 | `MONGODB_DATABASE` | Base de datos de producción |
 | `JWT_SECRET_KEY` | Generada automáticamente por Render |
 | `CORS_ALLOWED_ORIGINS` | URL exacta del frontend, sin `/` final |
+| `EXCHANGE_RATE_API_KEY` | Secreto regenerado de ExchangeRate-API |
 | `ENVIRONMENT` | `production` |
 | `DEBUG` | `false` |
 
@@ -308,8 +345,8 @@ de base de datos de mínimos privilegios y una región de Atlas cercana a la
 región elegida en Render.
 
 La aplicación valida la configuración al arrancar. Un secreto JWT corto,
-MongoDB sin configurar, `DEBUG=true` o CORS con comodín hacen fallar el
-despliegue deliberadamente.
+MongoDB o ExchangeRate-API sin configurar, `DEBUG=true` o CORS con comodín
+hacen fallar el despliegue deliberadamente.
 
 ### Verificación posterior
 

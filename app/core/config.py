@@ -15,9 +15,11 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
+    cors_allowed_origins: str = ""
 
     mongodb_uri: SecretStr | None = None
     mongodb_database: str | None = None
+    mongodb_server_selection_timeout_ms: int = Field(default=10000, gt=0)
 
     jwt_secret_key: SecretStr | None = None
     jwt_algorithm: Literal["HS256"] = "HS256"
@@ -39,6 +41,37 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @property
+    def allowed_cors_origins(self) -> list[str]:
+        """Return normalized browser origins configured as CSV."""
+        return [
+            origin.strip().rstrip("/")
+            for origin in self.cors_allowed_origins.split(",")
+            if origin.strip()
+        ]
+
+    def validate_production_configuration(self) -> None:
+        """Fail startup when required production settings are unsafe."""
+        if self.environment.casefold() != "production":
+            return
+        missing: list[str] = []
+        if self.mongodb_uri is None or not self.mongodb_uri.get_secret_value().strip():
+            missing.append("MONGODB_URI")
+        if self.mongodb_database is None or not self.mongodb_database.strip():
+            missing.append("MONGODB_DATABASE")
+        if self.jwt_secret_key is None:
+            missing.append("JWT_SECRET_KEY")
+        elif len(self.jwt_secret_key.get_secret_value()) < 32:
+            raise RuntimeError("JWT_SECRET_KEY must contain at least 32 characters.")
+        if self.debug:
+            raise RuntimeError("DEBUG must be false in production.")
+        if "*" in self.allowed_cors_origins:
+            raise RuntimeError("Wildcard CORS origins are not allowed in production.")
+        if missing:
+            raise RuntimeError(
+                f"Missing required production settings: {', '.join(missing)}."
+            )
 
 
 @lru_cache

@@ -229,6 +229,8 @@ Prueba los contratos HTTP y el flujo completo de la API mediante un cliente ASGI
 ## Archivos de la raíz
 
 - `.env.example`: catálogo sin secretos de las variables requeridas.
+- `.python-version`: fija Python 3.11.5 para desarrollo y Render.
+- `render.yaml`: Blueprint del Web Service, health check y variables de Render.
 - `.gitignore`: exclusiones de Python, entornos locales, cachés, cobertura y secretos.
 - `docker-compose.yml`: definición futura de los servicios necesarios para
   ejecutar el backend localmente. Atlas es la base de datos principal y el

@@ -262,3 +262,71 @@ el máximo permitido es de 366 días.
 `scripts/seed_data.py` crea los recursos globales y privados iniciales. Un
 recurso con `user_id` nulo es global; cualquier recurso con usuario asignado
 pertenece exclusivamente a ese usuario.
+
+## Despliegue en Render
+
+El repositorio incluye [`render.yaml`](render.yaml) para crear un Web Service
+con el runtime nativo de Python de Render. La configuración fija Python
+3.11.5, instala `requirements.txt`, inicia Uvicorn usando el puerto asignado
+por Render y comprueba `/api/v1/health` antes de publicar una versión.
+
+### Crear el servicio
+
+1. Publica este repositorio en GitHub, GitLab o Bitbucket.
+2. En Render selecciona **New > Blueprint** y conecta el repositorio.
+3. Render detectará `render.yaml` en la raíz.
+4. Proporciona los valores solicitados para `MONGODB_URI`,
+   `MONGODB_DATABASE` y `CORS_ALLOWED_ORIGINS`.
+5. Confirma la creación del servicio `gastos-back`.
+
+`JWT_SECRET_KEY` es generado por Render y no debe copiarse al repositorio.
+Las variables obligatorias quedan así:
+
+| Variable | Valor o propósito |
+|---|---|
+| `MONGODB_URI` | URI secreta de MongoDB Atlas |
+| `MONGODB_DATABASE` | Base de datos de producción |
+| `JWT_SECRET_KEY` | Generada automáticamente por Render |
+| `CORS_ALLOWED_ORIGINS` | URL exacta del frontend, sin `/` final |
+| `ENVIRONMENT` | `production` |
+| `DEBUG` | `false` |
+
+Para varios frontends, separa los orígenes con comas:
+
+```text
+https://gastos.example.com,https://gastos-front.onrender.com
+```
+
+No uses `*`: la aplicación lo rechaza en producción porque la autenticación
+utiliza encabezados y credenciales de navegador.
+
+### MongoDB Atlas
+
+Después de crear el servicio, abre **Connect > Outbound** en Render, copia sus
+rangos de salida y añádelos a **Network Access** en Atlas. Utiliza un usuario
+de base de datos de mínimos privilegios y una región de Atlas cercana a la
+región elegida en Render.
+
+La aplicación valida la configuración al arrancar. Un secreto JWT corto,
+MongoDB sin configurar, `DEBUG=true` o CORS con comodín hacen fallar el
+despliegue deliberadamente.
+
+### Verificación posterior
+
+Cuando Render marque el despliegue como disponible, comprueba:
+
+```bash
+curl https://TU-SERVICIO.onrender.com/api/v1/health
+```
+
+La respuesta esperada es:
+
+```json
+{"status":"ok"}
+```
+
+Después prueba `/docs`, registra o inicia sesión y verifica una petición desde
+el dominio real del frontend. El seed no se ejecuta automáticamente durante
+los despliegues para evitar duplicaciones o cambios involuntarios en
+producción. Si necesitas datos iniciales, ejecuta `python -m scripts.seed_data`
+una sola vez desde un entorno seguro con las variables de producción.

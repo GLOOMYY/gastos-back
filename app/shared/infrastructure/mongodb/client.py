@@ -16,14 +16,23 @@ class MongoDatabase:
         self.client: AsyncMongoClient[MongoDocument] | None = None
         self.database: AsyncDatabase[MongoDocument] | None = None
 
-    async def connect(self, uri: str, database_name: str) -> None:
+    async def connect(
+        self,
+        uri: str,
+        database_name: str,
+        server_selection_timeout_ms: int = 10000,
+    ) -> None:
         """Connect to MongoDB and verify server availability.
 
         Args:
             uri: MongoDB connection string.
             database_name: Database selected for the application.
+            server_selection_timeout_ms: Maximum initial server selection wait.
         """
-        self.client = AsyncMongoClient[MongoDocument](uri)
+        self.client = AsyncMongoClient[MongoDocument](
+            uri,
+            serverSelectionTimeoutMS=server_selection_timeout_ms,
+        )
         self.database = self.client[database_name]
         await self.client.admin.command("ping")
 

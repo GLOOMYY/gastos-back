@@ -1,0 +1,1 @@
+- anadir a futuro funcionalidad de prestamos entre bolsillos, asi usaremos la posibilidad de saldo negativo

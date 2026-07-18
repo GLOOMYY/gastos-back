@@ -21,6 +21,7 @@ class Category:
     description: str | None
     is_active: bool
     created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def create(
@@ -57,6 +58,7 @@ class Category:
             description.strip() if description and description.strip() else None
         )
 
+        now = datetime.now(UTC)
         return cls(
             id=None,
             user_id=clean_user_id,
@@ -64,7 +66,8 @@ class Category:
             transaction_type=transaction_type,
             description=clean_description,
             is_active=True,
-            created_at=datetime.now(UTC),
+            created_at=now,
+            updated_at=now,
         )
 
     @property
@@ -80,7 +83,26 @@ class Category:
     def deactivate(self) -> None:
         """Prevent the category from being selected."""
         self.is_active = False
+        self.updated_at = datetime.now(UTC)
 
     def activate(self) -> None:
         """Allow the category to be selected."""
         self.is_active = True
+        self.updated_at = datetime.now(UTC)
+
+    def update_details(
+        self,
+        name: str,
+        transaction_type: CategoryTransactionType,
+        description: str | None,
+    ) -> None:
+        """Update editable category details."""
+        clean_name = name.strip()
+        if not clean_name:
+            raise InvalidCategoryNameError()
+        self.name = clean_name
+        self.transaction_type = transaction_type
+        self.description = (
+            description.strip() if description and description.strip() else None
+        )
+        self.updated_at = datetime.now(UTC)

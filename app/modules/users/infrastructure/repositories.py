@@ -9,7 +9,10 @@ from pymongo.errors import DuplicateKeyError
 
 from app.modules.users.application.dto import RefreshTokenRecord
 from app.modules.users.domain.entities import User
-from app.modules.users.domain.exceptions import UserAlreadyExistsError
+from app.modules.users.domain.exceptions import (
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
 from app.modules.users.infrastructure.documents import (
     RefreshTokenDocument,
     UserDocument,
@@ -69,6 +72,35 @@ class MongoUserRepository:
         if document is None:
             return None
         return document_to_user(cast(UserDocument, document))
+
+    async def update(self, user: User) -> None:
+        """Persist mutable user fields and translate uniqueness conflicts."""
+        if user.id is None:
+            raise ValueError("A persisted user must have an identifier.")
+        try:
+            object_id = to_object_id(user.id)
+        except InvalidObjectIdError as error:
+            raise UserNotFoundError() from error
+
+        try:
+            result = await self._collection.update_one(
+                {"_id": object_id},
+                {
+                    "$set": {
+                        "email": user.email.value,
+                        "normalized_email": user.email.normalized,
+                        "password_hash": user.password_hash,
+                        "role": user.role.value,
+                        "is_active": user.is_active,
+                        "updated_at": user.updated_at,
+                        "schema_version": 1,
+                    }
+                },
+            )
+        except DuplicateKeyError as error:
+            raise UserAlreadyExistsError() from error
+        if result.matched_count == 0:
+            raise UserNotFoundError()
 
 
 class MongoRefreshTokenRepository:
@@ -134,5 +166,20 @@ class MongoRefreshTokenRepository:
         """Revoke every active refresh token in a rotation family."""
         await self._collection.update_many(
             {"family_id": family_id, "revoked_at": None},
+            {"$set": {"revoked_at": revoked_at}},
+        )
+
+    async def revoke_by_user(
+        self,
+        user_id: str,
+        revoked_at: datetime,
+    ) -> None:
+        """Revoke every active refresh token belonging to a user."""
+        try:
+            object_id = to_object_id(user_id)
+        except InvalidObjectIdError:
+            return
+        await self._collection.update_many(
+            {"user_id": object_id, "revoked_at": None},
             {"$set": {"revoked_at": revoked_at}},
         )

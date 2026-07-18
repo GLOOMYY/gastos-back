@@ -17,11 +17,15 @@ from app.modules.users.application.use_cases.authenticate_user import (
     AuthenticateUser,
 )
 from app.modules.users.application.use_cases.create_user import CreateUser
+from app.modules.users.application.use_cases.deactivate_user import (
+    DeactivateUser,
+)
 from app.modules.users.application.use_cases.get_user import GetUser
 from app.modules.users.application.use_cases.logout_user import LogoutUser
 from app.modules.users.application.use_cases.refresh_session import (
     RefreshSession,
 )
+from app.modules.users.application.use_cases.update_user import UpdateUser
 from app.modules.users.domain.exceptions import (
     InvalidAuthenticationTokenError,
     UserNotFoundError,
@@ -196,6 +200,34 @@ def get_user_use_case(user_repository: UserRepositoryDep) -> GetUser:
     return GetUser(user_repository)
 
 
+def get_update_user_use_case(
+    user_repository: UserRepositoryDep,
+    refresh_token_repository: RefreshTokenRepositoryDep,
+    password_hasher: PasswordHasherDep,
+    clock: ClockDep,
+) -> UpdateUser:
+    """Compose the authenticated user update use case."""
+    return UpdateUser(
+        user_repository=user_repository,
+        refresh_token_repository=refresh_token_repository,
+        password_hasher=password_hasher,
+        clock=clock,
+    )
+
+
+def get_deactivate_user_use_case(
+    user_repository: UserRepositoryDep,
+    refresh_token_repository: RefreshTokenRepositoryDep,
+    clock: ClockDep,
+) -> DeactivateUser:
+    """Compose the authenticated user deactivation use case."""
+    return DeactivateUser(
+        user_repository=user_repository,
+        refresh_token_repository=refresh_token_repository,
+        clock=clock,
+    )
+
+
 CreateUserDep = Annotated[CreateUser, Depends(get_create_user_use_case)]
 AuthenticateUserDep = Annotated[
     AuthenticateUser,
@@ -207,6 +239,11 @@ RefreshSessionDep = Annotated[
 ]
 LogoutUserDep = Annotated[LogoutUser, Depends(get_logout_user_use_case)]
 GetUserDep = Annotated[GetUser, Depends(get_user_use_case)]
+UpdateUserDep = Annotated[UpdateUser, Depends(get_update_user_use_case)]
+DeactivateUserDep = Annotated[
+    DeactivateUser,
+    Depends(get_deactivate_user_use_case),
+]
 
 
 async def get_current_user(

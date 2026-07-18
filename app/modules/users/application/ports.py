@@ -90,6 +90,14 @@ class RefreshTokenRepository(Protocol):
         """Revoke every active token belonging to one family."""
         ...
 
+    async def revoke_by_user(
+        self,
+        user_id: str,
+        revoked_at: datetime,
+    ) -> None:
+        """Revoke every active refresh token belonging to a user."""
+        ...
+
 
 class Clock(Protocol):
     """Source of timezone-aware current time."""

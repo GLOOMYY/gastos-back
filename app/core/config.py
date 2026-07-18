@@ -1,5 +1,6 @@
 """Environment-based application configuration."""
 
+from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 
@@ -22,6 +23,12 @@ class Settings(BaseSettings):
     jwt_algorithm: Literal["HS256"] = "HS256"
     access_token_expire_minutes: int = Field(default=30, gt=0)
     refresh_token_expire_days: int = Field(default=30, gt=0)
+
+    initial_user_email: str | None = None
+    initial_user_password: SecretStr | None = None
+    initial_account_name: str = "Main account"
+    initial_account_currency: str = "COP"
+    initial_account_balance: Decimal = Decimal("0")
 
     exchange_rate_provider: str | None = None
     exchange_rate_api_key: SecretStr | None = None

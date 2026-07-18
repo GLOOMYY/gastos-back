@@ -15,10 +15,12 @@ class AccountType:
 
     id: str | None
     user_id: str | None
+    code: str | None
     name: str
     description: str | None
     is_active: bool
     created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def create(
@@ -26,6 +28,7 @@ class AccountType:
         name: str,
         description: str | None = None,
         user_id: str | None = None,
+        code: str | None = None,
     ) -> "AccountType":
         """Create a global or user-owned account type.
 
@@ -53,13 +56,17 @@ class AccountType:
             description.strip() if description and description.strip() else None
         )
 
+        clean_code = code.strip().upper() if code and code.strip() else None
+        now = datetime.now(UTC)
         return cls(
             id=None,
             user_id=clean_user_id,
+            code=clean_code,
             name=clean_name,
             description=clean_description,
             is_active=True,
-            created_at=datetime.now(UTC),
+            created_at=now,
+            updated_at=now,
         )
 
     @property
@@ -75,7 +82,24 @@ class AccountType:
     def deactivate(self) -> None:
         """Prevent the account type from being selected."""
         self.is_active = False
+        self.updated_at = datetime.now(UTC)
 
     def activate(self) -> None:
         """Allow the account type to be selected."""
         self.is_active = True
+        self.updated_at = datetime.now(UTC)
+
+    def update_details(
+        self,
+        name: str,
+        description: str | None,
+    ) -> None:
+        """Update editable account type details."""
+        clean_name = name.strip()
+        if not clean_name:
+            raise InvalidAccountTypeNameError()
+        self.name = clean_name
+        self.description = (
+            description.strip() if description and description.strip() else None
+        )
+        self.updated_at = datetime.now(UTC)

@@ -60,6 +60,126 @@ _REFRESH_TOKEN_VALIDATOR: dict[str, Any] = {
     }
 }
 
+_ACCOUNT_TYPE_VALIDATOR: dict[str, Any] = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": [
+            "user_id",
+            "name",
+            "normalized_name",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "schema_version",
+        ],
+        "properties": {
+            "user_id": {"bsonType": ["objectId", "null"]},
+            "code": {"bsonType": ["string", "null"]},
+            "name": {"bsonType": "string"},
+            "normalized_name": {"bsonType": "string"},
+            "description": {"bsonType": ["string", "null"]},
+            "is_active": {"bsonType": "bool"},
+            "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": "date"},
+            "schema_version": {"bsonType": "int"},
+        },
+    }
+}
+
+_CATEGORY_VALIDATOR: dict[str, Any] = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": [
+            "user_id",
+            "name",
+            "normalized_name",
+            "transaction_type",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "schema_version",
+        ],
+        "properties": {
+            "user_id": {"bsonType": ["objectId", "null"]},
+            "name": {"bsonType": "string"},
+            "normalized_name": {"bsonType": "string"},
+            "transaction_type": {"enum": ["income", "expense"]},
+            "description": {"bsonType": ["string", "null"]},
+            "is_active": {"bsonType": "bool"},
+            "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": "date"},
+            "schema_version": {"bsonType": "int"},
+        },
+    }
+}
+
+_ACCOUNT_VALIDATOR: dict[str, Any] = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": [
+            "user_id",
+            "account_type_id",
+            "name",
+            "normalized_name",
+            "initial_balance",
+            "balance",
+            "currency",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "schema_version",
+        ],
+        "properties": {
+            "user_id": {"bsonType": "objectId"},
+            "account_type_id": {"bsonType": "objectId"},
+            "name": {"bsonType": "string"},
+            "normalized_name": {"bsonType": "string"},
+            "description": {"bsonType": ["string", "null"]},
+            "initial_balance": {"bsonType": "decimal"},
+            "balance": {"bsonType": "decimal"},
+            "currency": {"bsonType": "string"},
+            "is_active": {"bsonType": "bool"},
+            "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": "date"},
+            "schema_version": {"bsonType": "int"},
+        },
+    }
+}
+
+_TRANSACTION_VALIDATOR: dict[str, Any] = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": [
+            "user_id",
+            "account_id",
+            "transaction_type",
+            "amount",
+            "currency",
+            "occurred_at",
+            "status",
+            "created_at",
+            "updated_at",
+            "schema_version",
+        ],
+        "properties": {
+            "user_id": {"bsonType": "objectId"},
+            "account_id": {"bsonType": "objectId"},
+            "category_id": {"bsonType": ["objectId", "null"]},
+            "transaction_type": {"bsonType": "string"},
+            "amount": {"bsonType": "decimal"},
+            "currency": {"bsonType": "string"},
+            "occurred_at": {"bsonType": "date"},
+            "description": {"bsonType": ["string", "null"]},
+            "note": {"bsonType": ["string", "null"]},
+            "reversal_of_id": {"bsonType": ["objectId", "null"]},
+            "status": {"bsonType": "string"},
+            "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": "date"},
+            "schema_version": {"bsonType": "int"},
+        },
+    }
+}
+
 
 async def ensure_auth_collection_schemas(
     database: AsyncDatabase[MongoDocument],
@@ -78,6 +198,18 @@ async def ensure_auth_collection_schemas(
         "refresh_tokens",
         _REFRESH_TOKEN_VALIDATOR,
     )
+    for collection_name, validator in (
+        ("account_types", _ACCOUNT_TYPE_VALIDATOR),
+        ("categories", _CATEGORY_VALIDATOR),
+        ("accounts", _ACCOUNT_VALIDATOR),
+        ("transactions", _TRANSACTION_VALIDATOR),
+    ):
+        await _ensure_collection(
+            database,
+            existing_collections,
+            collection_name,
+            validator,
+        )
 
 
 async def _ensure_collection(

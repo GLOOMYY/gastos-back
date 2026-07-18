@@ -123,6 +123,19 @@ class Account:
         self.is_active = True
         self.updated_at = datetime.now(UTC)
 
+    def update_details(self, name: str, description: str | None) -> None:
+        """Update non-financial account metadata."""
+        clean_name = name.strip()
+        if not clean_name:
+            raise InvalidAccountNameError()
+        self.name = clean_name
+        self.description = (
+            description.strip()
+            if description is not None and description.strip()
+            else None
+        )
+        self.updated_at = datetime.now(UTC)
+
     @staticmethod
     def _validate_positive_amount(amount: Decimal) -> None:
         """Validate an amount used to change the balance."""

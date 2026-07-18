@@ -35,6 +35,22 @@ class LogoutUserCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class UpdateUserCommand:
+    """Changes requested by the authenticated user."""
+
+    user_id: str
+    email: str | None = None
+    password: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class DeactivateUserCommand:
+    """Authenticated user whose account must be deactivated."""
+
+    user_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class UserResult:
     """Safe user information returned by application use cases."""
 

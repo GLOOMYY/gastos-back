@@ -30,6 +30,7 @@ class Transaction:
     occurred_at: datetime
     description: str | None
     note: str | None
+    reversal_of_id: str | None
     status: TransactionStatus
     created_at: datetime
     updated_at: datetime
@@ -46,6 +47,7 @@ class Transaction:
         category_id: str | None = None,
         description: str | None = None,
         note: str | None = None,
+        reversal_of_id: str | None = None,
     ) -> "Transaction":
         """Create an immutable confirmed financial transaction.
 
@@ -79,7 +81,10 @@ class Transaction:
             "category_id",
         )
 
-        if not isinstance(amount, Decimal) or amount <= Decimal("0"):
+        invalid_amount = not isinstance(amount, Decimal) or amount == Decimal("0")
+        if transaction_type is not TransactionType.INITIAL_BALANCE:
+            invalid_amount = invalid_amount or amount < Decimal("0")
+        if invalid_amount:
             raise InvalidTransactionAmountError()
 
         if occurred_at.tzinfo is None or occurred_at.utcoffset() is None:
@@ -98,6 +103,10 @@ class Transaction:
             occurred_at=occurred_at.astimezone(UTC),
             description=cls._clean_optional_text(description),
             note=cls._clean_optional_text(note),
+            reversal_of_id=cls._clean_optional_identifier(
+                reversal_of_id,
+                "reversal_of_id",
+            ),
             status=TransactionStatus.CONFIRMED,
             created_at=now,
             updated_at=now,

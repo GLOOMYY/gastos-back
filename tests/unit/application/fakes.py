@@ -52,6 +52,23 @@ class FakeUserRepository:
             None,
         )
 
+    async def update(self, user: User) -> None:
+        """Persist changes to an existing in-memory user."""
+        if user.id is None or user.id not in self.users:
+            return
+        duplicate = next(
+            (
+                existing_user
+                for user_id, existing_user in self.users.items()
+                if user_id != user.id
+                and existing_user.email.normalized == user.email.normalized
+            ),
+            None,
+        )
+        if duplicate is not None:
+            raise UserAlreadyExistsError()
+        self.users[user.id] = user
+
 
 class FakePasswordHasher:
     """Provide deterministic hashes for application tests."""
@@ -219,6 +236,19 @@ class FakeRefreshTokenRepository:
         """Revoke all active tokens in a family."""
         for token_hash, record in tuple(self.records.items()):
             if record.family_id == family_id and record.revoked_at is None:
+                self.records[token_hash] = replace(
+                    record,
+                    revoked_at=revoked_at,
+                )
+
+    async def revoke_by_user(
+        self,
+        user_id: str,
+        revoked_at: datetime,
+    ) -> None:
+        """Revoke every active token belonging to a user."""
+        for token_hash, record in tuple(self.records.items()):
+            if record.user_id == user_id and record.revoked_at is None:
                 self.records[token_hash] = replace(
                     record,
                     revoked_at=revoked_at,

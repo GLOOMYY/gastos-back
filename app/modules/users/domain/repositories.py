@@ -22,3 +22,7 @@ class UserRepository(Protocol):
     ) -> User | None:
         """Return a user by canonical email when it exists."""
         ...
+
+    async def update(self, user: User) -> None:
+        """Persist changes to an existing user."""
+        ...

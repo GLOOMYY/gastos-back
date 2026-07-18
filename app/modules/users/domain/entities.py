@@ -59,3 +59,15 @@ class User:
         """Allow the user to authenticate."""
         self.is_active = True
         self.updated_at = datetime.now(UTC)
+
+    def change_email(self, email: str) -> None:
+        """Replace the user's email with a validated value."""
+        self.email = Email.create(email)
+        self.updated_at = datetime.now(UTC)
+
+    def change_password_hash(self, password_hash: str) -> None:
+        """Replace the password hash without receiving a raw password."""
+        if not password_hash.strip():
+            raise EmptyPasswordHashError()
+        self.password_hash = password_hash
+        self.updated_at = datetime.now(UTC)

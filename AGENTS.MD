@@ -200,6 +200,7 @@ gastos-app/
 │   │       └── transactions/
 │   ├── scripts/
 │   │   ├── create_indexes.py
+│   │   ├── seed_user.py
 │   │   ├── seed_account_types.py
 │   │   ├── seed_categories.py
 │   │   └── migrations/

@@ -146,3 +146,61 @@ async def test_unknown_route_uses_standard_error_envelope() -> None:
     assert response.json()["code"] == "not_found"
     assert response.json()["details"] is None
     assert response.json()["request_id"]
+
+
+@pytest.mark.asyncio
+async def test_authenticated_user_crud_flow() -> None:
+    """The current user can read, update, and soft-delete itself."""
+    application = _create_test_app()
+    transport = ASGITransport(app=application)
+
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+    ) as client:
+        await client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "user@example.com",
+                "password": "strong-password",
+            },
+        )
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "user@example.com",
+                "password": "strong-password",
+            },
+        )
+        tokens = login_response.json()
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+        get_response = await client.get("/api/v1/users/me", headers=headers)
+        update_response = await client.patch(
+            "/api/v1/users/me",
+            headers=headers,
+            json={
+                "email": "updated@example.com",
+                "password": "updated-password",
+            },
+        )
+        old_refresh_response = await client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": tokens["refresh_token"]},
+        )
+        delete_response = await client.delete(
+            "/api/v1/users/me",
+            headers=headers,
+        )
+        after_delete_response = await client.get(
+            "/api/v1/users/me",
+            headers=headers,
+        )
+
+    assert get_response.status_code == 200
+    assert get_response.json()["email"] == "user@example.com"
+    assert update_response.status_code == 200
+    assert update_response.json()["email"] == "updated@example.com"
+    assert old_refresh_response.status_code == 401
+    assert delete_response.status_code == 204
+    assert after_delete_response.status_code == 403

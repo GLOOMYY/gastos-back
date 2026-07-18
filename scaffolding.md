@@ -150,8 +150,8 @@ Expone los casos de uso mediante FastAPI:
 
 Responsable del ciclo de vida de usuarios y autenticación.
 
-- Casos de uso implementados: registro, login, consulta del usuario actual,
-  rotación de refresh token y logout.
+- Casos de uso implementados: registro, login, consulta y actualización del
+  usuario actual, desactivación lógica, rotación de refresh token y logout.
 - `password_hasher.py`: adaptación Passlib con Argon2 para generar y verificar
   hashes de contraseña.
 - `token_service.py`: emisión y validación de JWT, además del hash SHA-256 de
@@ -193,6 +193,11 @@ Administra ingresos, gastos, transferencias y reversiones.
 Contiene procesos administrativos ejecutados fuera del servidor web.
 
 - `create_indexes.py`: ejecución explícita de la creación de índices.
+- `seed_user.py`: crea idempotentemente el usuario inicial definido mediante
+  variables de entorno, usando el flujo real de registro y Argon2.
+- `seed_data.py`: crea idempotentemente un conjunto completo de prueba con
+  usuario, catálogos globales y privados, cuenta, saldo inicial y un historial
+  de ingresos y gastos en COP.
 - `seed_account_types.py`: carga idempotente del catálogo inicial de tipos de cuenta.
 - `seed_categories.py`: carga idempotente de categorías globales y, cuando se
   indique un usuario inicial explícito, de categorías privadas para ese

@@ -42,3 +42,35 @@ class InvalidAccountAmountError(AccountDomainError):
         if positive_required:
             message = "The amount must be a positive Decimal."
         super().__init__(message)
+
+
+class AccountNotFoundError(AccountDomainError):
+    """Raised when an account cannot be found."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("The account was not found.")
+
+
+class AccountAccessDeniedError(AccountDomainError):
+    """Raised when a user attempts to access another user's account."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("You cannot access this account.")
+
+
+class AccountNameAlreadyExistsError(AccountDomainError):
+    """Raised when an active account name is already used by the owner."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("An active account with this name already exists.")
+
+
+class InactiveAccountError(AccountDomainError):
+    """Raised when a financial operation targets an inactive account."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("The account is inactive.")

@@ -67,3 +67,11 @@ class InvalidAuthenticationTokenError(UserDomainError):
     def __init__(self) -> None:
         """Initialize the invalid authentication token error."""
         super().__init__("The authentication token is invalid or expired.")
+
+
+class NoUserChangesError(UserDomainError):
+    """Raised when an update command contains no supported changes."""
+
+    def __init__(self) -> None:
+        """Initialize the empty user update error."""
+        super().__init__("At least one user field must be updated.")
